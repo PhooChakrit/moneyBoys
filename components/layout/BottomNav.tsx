@@ -26,11 +26,13 @@ export function BottomNav() {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-20 bg-white border-t border-gray-100 flex items-center justify-around px-6 pb-safe z-50">
+    <div className="fixed bottom-0 left-0 right-0 h-20 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 flex items-center justify-around px-6 pb-safe z-50">
       <Link
         href={`/${locale}`}
         className={`flex flex-col items-center gap-1 ${
-          isActive("") ? "text-emerald-600" : "text-gray-400"
+          isActive("")
+            ? "text-emerald-600 dark:text-emerald-400"
+            : "text-gray-400 dark:text-gray-500"
         }`}
       >
         <HomeIcon className="w-6 h-6" />
@@ -40,7 +42,9 @@ export function BottomNav() {
       <Link
         href={`/${locale}/groups`}
         className={`flex flex-col items-center gap-1 ${
-          isActive("/groups") ? "text-emerald-600" : "text-gray-400"
+          isActive("/groups")
+            ? "text-emerald-600 dark:text-emerald-400"
+            : "text-gray-400 dark:text-gray-500"
         }`}
       >
         <UsersIcon className="w-6 h-6" />
@@ -57,7 +61,9 @@ export function BottomNav() {
       <Link
         href={`/${locale}/settle`}
         className={`flex flex-col items-center gap-1 ${
-          isActive("/settle") ? "text-emerald-600" : "text-gray-400"
+          isActive("/settle")
+            ? "text-emerald-600 dark:text-emerald-400"
+            : "text-gray-400 dark:text-gray-500"
         }`}
       >
         <CheckIcon className="w-6 h-6" />
@@ -67,7 +73,9 @@ export function BottomNav() {
       <Link
         href={`/${locale}/settings`}
         className={`flex flex-col items-center gap-1 ${
-          isActive("/settings") ? "text-emerald-600" : "text-gray-400"
+          isActive("/settings")
+            ? "text-emerald-600 dark:text-emerald-400"
+            : "text-gray-400 dark:text-gray-500"
         }`}
       >
         <SettingsIcon className="w-6 h-6" />

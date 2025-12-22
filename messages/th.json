@@ -40,6 +40,7 @@
     "language": "ภาษา",
     "theme": "ธีม",
     "light": "สว่าง",
+    "dark": "มืด",
     "inviteFriends": "เชิญเพื่อน",
     "groupPermissions": "สิทธิ์กลุ่ม",
     "expenseHistory": "ประวัติรายจ่าย",
@@ -50,21 +51,22 @@
   "addExpense": {
     "title": "เพิ่มรายจ่าย",
     "description": "รายละเอียด",
-    "descPlaceholder": "เช่น ค่าอาหารเย็น",
+    "descriptionPlaceholder": "เช่น ค่าอาหารเย็น",
     "amount": "จำนวนเงิน",
-    "whoPaid": "ใครจ่าย?",
-    "splitHow": "หารกัน",
-    "splitEvenly": "หารเท่าๆ กัน",
+    "paidBy": "ใครจ่าย?",
+    "splitWith": "หารกัน",
+    "splitEqually": "หารเท่าๆ กัน",
     "custom": "กำหนดเอง",
     "receipt": "ใบเสร็จ (ไม่บังคับ)",
-    "takePhoto": "แตะเพื่อถ่ายรูป",
+    "tapToPhoto": "แตะเพื่อถ่ายรูป",
     "submit": "เพิ่มรายจ่าย"
   },
   "nav": {
     "home": "หน้าหลัก",
     "groups": "กลุ่ม",
     "settle": "เคลียร์",
-    "settings": "ตั้งค่า"
+    "settings": "ตั้งค่า",
+    "addExpense": "เพิ่มรายจ่าย"
   },
   "common": {
     "currency": "฿",

@@ -16,25 +16,31 @@ export function SettlementScreen() {
   const locale = params.locale as string;
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] pb-24 lg:pb-8">
+    <div className="min-h-screen bg-[#FAFAFA] dark:bg-gray-900 pb-24 lg:pb-8">
       <div className="px-5 lg:px-8 pt-8 lg:pt-12 pb-4">
         <div className="flex items-center gap-3">
           <Link
             href={`/${locale}`}
-            className="p-2 -ml-2 rounded-full hover:bg-gray-100"
+            className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
           >
-            <ArrowLeftIcon className="w-5 h-5 text-gray-700" />
+            <ArrowLeftIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {t("title")}
+          </h1>
         </div>
       </div>
 
       {/* Summary */}
       <div className="px-5 lg:px-8 mb-5">
-        <Card className="bg-[#E0F2FE] border-0">
+        <Card className="bg-[#E0F2FE] dark:bg-blue-900/30 border-0">
           <CardContent className="p-4">
-            <p className="text-blue-700 text-sm">{t("totalToPay")}</p>
-            <p className="text-2xl font-bold text-blue-800 mt-1">680฿</p>
+            <p className="text-blue-700 dark:text-blue-300 text-sm">
+              {t("totalToPay")}
+            </p>
+            <p className="text-2xl font-bold text-blue-800 dark:text-blue-200 mt-1">
+              680฿
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -42,28 +48,28 @@ export function SettlementScreen() {
       {/* Settlements List */}
       <div className="px-5 lg:px-8 space-y-3">
         {settlements.map((item) => (
-          <Card key={item.id} className="border-0 shadow-sm">
+          <Card key={item.id} className="border-0 shadow-sm dark:bg-gray-800">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
                     <Avatar className="w-9 h-9">
-                      <AvatarFallback className="text-sm bg-gray-100">
+                      <AvatarFallback className="text-sm bg-gray-100 dark:bg-gray-700 dark:text-white">
                         {item.from[0]}
                       </AvatarFallback>
                     </Avatar>
                     <ArrowRightIcon className="w-4 h-4 text-gray-400" />
                     <Avatar className="w-9 h-9">
-                      <AvatarFallback className="text-sm bg-emerald-100 text-emerald-700">
+                      <AvatarFallback className="text-sm bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
                         {item.to[0]}
                       </AvatarFallback>
                     </Avatar>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-800">
+                    <p className="font-medium text-gray-800 dark:text-white">
                       {item.from} → {item.to}
                     </p>
-                    <p className="text-lg font-bold text-gray-900">
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">
                       {item.amount}฿
                     </p>
                   </div>
@@ -73,8 +79,8 @@ export function SettlementScreen() {
                     variant={item.status === "paid" ? "default" : "secondary"}
                     className={
                       item.status === "paid"
-                        ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
-                        : "bg-amber-100 text-amber-700 hover:bg-amber-100"
+                        ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900 dark:text-emerald-300"
+                        : "bg-amber-100 text-amber-700 hover:bg-amber-100 dark:bg-amber-900 dark:text-amber-300"
                     }
                   >
                     {item.status === "paid" ? t("paid") : t("pending")}
