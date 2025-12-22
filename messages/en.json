@@ -40,6 +40,7 @@
     "language": "Language",
     "theme": "Theme",
     "light": "Light",
+    "dark": "Dark",
     "inviteFriends": "Invite Friends",
     "groupPermissions": "Group Permissions",
     "expenseHistory": "Expense History",
@@ -50,21 +51,22 @@
   "addExpense": {
     "title": "Add Expense",
     "description": "Description",
-    "descPlaceholder": "e.g., Dinner",
+    "descriptionPlaceholder": "e.g., Dinner",
     "amount": "Amount",
-    "whoPaid": "Who paid?",
-    "splitHow": "Split how",
-    "splitEvenly": "Split evenly",
+    "paidBy": "Who paid?",
+    "splitWith": "Split with",
+    "splitEqually": "Split evenly",
     "custom": "Custom",
     "receipt": "Receipt (optional)",
-    "takePhoto": "Tap to take photo",
+    "tapToPhoto": "Tap to take photo",
     "submit": "Add Expense"
   },
   "nav": {
     "home": "Home",
     "groups": "Groups",
     "settle": "Settle",
-    "settings": "Settings"
+    "settings": "Settings",
+    "addExpense": "Add Expense"
   },
   "common": {
     "currency": "฿",
