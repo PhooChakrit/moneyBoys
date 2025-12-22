@@ -1,0 +1,73 @@
+{
+  "home": {
+    "greeting": "Hello,",
+    "userName": "Pim 👋",
+    "balanceTitle": "People owe you",
+    "balanceAmount": "1,250.00 ฿",
+    "balanceSubtitle": "You need to pay -250 ฿",
+    "quickActions": "What can you do",
+    "createGroup": "Create Group",
+    "createGroupDesc": "Gather friends",
+    "addExpense": "Add Expense",
+    "addExpenseDesc": "Record expenses",
+    "settle": "Settle Debts",
+    "settleDesc": "Pay back friends",
+    "history": "History",
+    "historyDesc": "View past records",
+    "recentGroups": "Recent Groups",
+    "viewAll": "View All"
+  },
+  "groups": {
+    "title": "My Groups",
+    "members": "members",
+    "peopleCount": "people"
+  },
+  "groupDetail": {
+    "transactions": "Transactions",
+    "debts": "Debts",
+    "showAll": "Show all",
+    "paidFor": "paid for"
+  },
+  "settlement": {
+    "title": "Settle Debts",
+    "totalToPay": "Total to settle",
+    "pending": "Pending",
+    "paid": "Paid",
+    "markPaid": "Mark as Paid"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "light": "Light",
+    "inviteFriends": "Invite Friends",
+    "groupPermissions": "Group Permissions",
+    "expenseHistory": "Expense History",
+    "paymentHistory": "Payment History",
+    "account": "Account",
+    "logout": "Logout"
+  },
+  "addExpense": {
+    "title": "Add Expense",
+    "description": "Description",
+    "descPlaceholder": "e.g., Dinner",
+    "amount": "Amount",
+    "whoPaid": "Who paid?",
+    "splitHow": "Split how",
+    "splitEvenly": "Split evenly",
+    "custom": "Custom",
+    "receipt": "Receipt (optional)",
+    "takePhoto": "Tap to take photo",
+    "submit": "Add Expense"
+  },
+  "nav": {
+    "home": "Home",
+    "groups": "Groups",
+    "settle": "Settle",
+    "settings": "Settings"
+  },
+  "common": {
+    "currency": "฿",
+    "thb": "THB"
+  }
+}

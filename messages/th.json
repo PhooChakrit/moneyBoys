@@ -1,0 +1,73 @@
+{
+  "home": {
+    "greeting": "สวัสดี,",
+    "userName": "Pim 👋",
+    "balanceTitle": "มีคนติดหนี้คุณ",
+    "balanceAmount": "1,250.00 ฿",
+    "balanceSubtitle": "ต้องจ่าย -250 ฿",
+    "quickActions": "ทำอะไรได้บ้าง",
+    "createGroup": "สร้างกลุ่มใหม่",
+    "createGroupDesc": "รวมกลุ่มเพื่อนๆ",
+    "addExpense": "เพิ่มรายจ่าย",
+    "addExpenseDesc": "บันทึกค่าใช้จ่าย",
+    "settle": "เคลียร์หนี้",
+    "settleDesc": "จ่ายคืนเพื่อน",
+    "history": "ประวัติ",
+    "historyDesc": "ดูรายการย้อนหลัง",
+    "recentGroups": "กลุ่มล่าสุด",
+    "viewAll": "ดูทั้งหมด"
+  },
+  "groups": {
+    "title": "กลุ่มของฉัน",
+    "members": "สมาชิก",
+    "peopleCount": "คน"
+  },
+  "groupDetail": {
+    "transactions": "รายการ",
+    "debts": "หนี้สิน",
+    "showAll": "แสดงทั้งหมด",
+    "paidFor": "จ่ายให้"
+  },
+  "settlement": {
+    "title": "เคลียร์หนี้",
+    "totalToPay": "ยอดที่ต้องเคลียร์",
+    "pending": "รอจ่าย",
+    "paid": "จ่ายแล้ว",
+    "markPaid": "จ่ายแล้ว"
+  },
+  "settings": {
+    "title": "ตั้งค่า",
+    "language": "ภาษา",
+    "theme": "ธีม",
+    "light": "สว่าง",
+    "inviteFriends": "เชิญเพื่อน",
+    "groupPermissions": "สิทธิ์กลุ่ม",
+    "expenseHistory": "ประวัติรายจ่าย",
+    "paymentHistory": "ประวัติการจ่าย",
+    "account": "บัญชี",
+    "logout": "ออกจากระบบ"
+  },
+  "addExpense": {
+    "title": "เพิ่มรายจ่าย",
+    "description": "รายละเอียด",
+    "descPlaceholder": "เช่น ค่าอาหารเย็น",
+    "amount": "จำนวนเงิน",
+    "whoPaid": "ใครจ่าย?",
+    "splitHow": "หารกัน",
+    "splitEvenly": "หารเท่าๆ กัน",
+    "custom": "กำหนดเอง",
+    "receipt": "ใบเสร็จ (ไม่บังคับ)",
+    "takePhoto": "แตะเพื่อถ่ายรูป",
+    "submit": "เพิ่มรายจ่าย"
+  },
+  "nav": {
+    "home": "หน้าหลัก",
+    "groups": "กลุ่ม",
+    "settle": "เคลียร์",
+    "settings": "ตั้งค่า"
+  },
+  "common": {
+    "currency": "฿",
+    "thb": "THB"
+  }
+}

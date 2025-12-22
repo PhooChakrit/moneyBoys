@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  groupMembers GroupMember[]
+  expenses     Expense[]
+  settlements  Settlement[]  @relation("SettlementFrom")
+  settledBy    Settlement[]  @relation("SettlementTo")
+
+  @@map("users")
+}
+
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  members     GroupMember[]
+  expenses    Expense[]
+  settlements Settlement[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id       String   @id @default(cuid())
+  role     String   @default("member") // "admin" or "member"
+  joinedAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  groupId String
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+  @@map("group_members")
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  title       String
+  amount      Float
+  currency    String   @default("THB")
+  description String?
+  receiptUrl  String?
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  paidById String
+  paidBy   User   @relation(fields: [paidById], references: [id])
+
+  groupId String
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  // Relations
+  splits ExpenseSplit[]
+
+  @@map("expenses")
+}
+
+model ExpenseSplit {
+  id        String   @id @default(cuid())
+  amount    Float
+  share     Float    @default(1.0) // Share ratio (1.0 = equal split)
+  settled   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  expenseId String
+  expense   Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+
+  userId String
+
+  @@map("expense_splits")
+}
+
+model Settlement {
+  id        String    @id @default(cuid())
+  amount    Float
+  status    String    @default("pending") // "pending", "completed"
+  paidAt    DateTime?
+  note      String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  fromUserId String
+  fromUser   User   @relation("SettlementFrom", fields: [fromUserId], references: [id])
+
+  toUserId String
+  toUser   User   @relation("SettlementTo", fields: [toUserId], references: [id])
+
+  groupId String
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@map("settlements")
+}
