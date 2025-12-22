@@ -22,8 +22,8 @@ export function SettingsScreen() {
   };
 
   const settingsItems = [
-    { icon: "🔗", label: t("inviteFriends"), value: "" },
-    { icon: "🔒", label: t("groupPermissions"), value: "" },
+    // { icon: "🔗", label: t("inviteFriends"), value: "" },
+    // { icon: "🔒", label: t("groupPermissions"), value: "" },
     { icon: "📜", label: t("expenseHistory"), value: "" },
     { icon: "💳", label: t("paymentHistory"), value: "" },
     { icon: "👤", label: t("account"), value: "" },
