@@ -3,6 +3,7 @@ import { getMessages, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import "../globals.css";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { ThemeProvider } from "@/components/theme-provider";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 
@@ -30,32 +31,34 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale}>
-      <body className="antialiased">
-        <NextIntlClientProvider messages={messages}>
-          {/* Responsive container */}
-          <div className="min-h-screen bg-gray-50">
-            {/* Desktop sidebar nav - hidden on mobile/tablet */}
-            <aside className="hidden lg:block fixed left-0 top-0 h-screen w-[280px] border-r bg-white p-6 z-10">
-              <h1 className="mb-8 text-2xl font-bold text-gray-900">
-                MoneyBoy
-              </h1>
-              <nav className="space-y-2">
-                <SidebarNav locale={locale} />
-              </nav>
-            </aside>
+    <html lang={locale} suppressHydrationWarning>
+      <body className="antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <NextIntlClientProvider messages={messages}>
+            {/* Responsive container */}
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+              {/* Desktop sidebar nav - hidden on mobile/tablet */}
+              <aside className="hidden lg:block fixed left-0 top-0 h-screen w-[280px] border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 z-10">
+                <h1 className="mb-8 text-2xl font-bold text-gray-900 dark:text-white">
+                  MoneyBoy
+                </h1>
+                <nav className="space-y-2">
+                  <SidebarNav locale={locale} />
+                </nav>
+              </aside>
 
-            {/* Main content area */}
-            <main className="min-h-screen bg-white lg:bg-gray-50 lg:ml-[280px]">
-              {children}
-            </main>
+              {/* Main content area */}
+              <main className="min-h-screen bg-white dark:bg-gray-900 lg:bg-gray-50 lg:dark:bg-gray-900 lg:ml-[280px]">
+                {children}
+              </main>
 
-            {/* Bottom nav - hidden on desktop */}
-            <div className="lg:hidden">
-              <BottomNav />
+              {/* Bottom nav - hidden on desktop */}
+              <div className="lg:hidden">
+                <BottomNav />
+              </div>
             </div>
-          </div>
-        </NextIntlClientProvider>
+          </NextIntlClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
@@ -78,7 +81,7 @@ async function SidebarNav({ locale }: { locale: string }) {
         <a
           key={item.href}
           href={item.href}
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+          className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         >
           <span className="text-xl">{item.icon}</span>
           <span className="font-medium">{item.label}</span>
@@ -89,7 +92,7 @@ async function SidebarNav({ locale }: { locale: string }) {
         className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-emerald-500 px-3 py-3 text-white hover:bg-emerald-600 transition-colors"
       >
         <span className="text-xl">+</span>
-        <span className="font-medium">{t("groups")}</span>
+        <span className="font-medium">{t("addExpense")}</span>
       </a>
     </>
   );
