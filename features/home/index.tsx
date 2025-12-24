@@ -38,9 +38,9 @@ export function HomeScreen() {
   const t = useTranslations("home");
   const params = useParams();
   const locale = params.locale as string;
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
-    null,
+    null
   );
   const [loading, setLoading] = useState(true);
   const hasFetched = useRef(false);
@@ -81,9 +81,13 @@ export function HomeScreen() {
             <p className="text-gray-500 dark:text-gray-400 text-sm">
               {t("greeting")}
             </p>
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
-              {user?.name || t("userName")}
-            </h1>
+            {authLoading ? (
+              <div className="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            ) : (
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
+                {user?.name || "Welcome"} 👋
+              </h1>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <button className="p-2 rounded-full bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow">

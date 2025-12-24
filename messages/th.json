@@ -24,7 +24,21 @@
   "groups": {
     "title": "กลุ่มของฉัน",
     "members": "สมาชิก",
-    "peopleCount": "คน"
+    "peopleCount": "คน",
+    "noGroups": "คุณยังไม่ได้อยู่ในกลุ่มใดๆ",
+    "joinGroupWithCode": "เข้ากลุ่มด้วยรหัส",
+    "joinGroup": "เข้าร่วมกลุ่ม",
+    "enterInviteCode": "กรอกรหัสเชิญ",
+    "joining": "กำลังเข้าร่วม...",
+    "join": "เข้าร่วม",
+    "createGroup": "สร้างกลุ่มใหม่",
+    "groupName": "ชื่อกลุ่ม",
+    "groupNamePlaceholder": "เช่น ทริปญี่ปุ่น",
+    "description": "รายละเอียด",
+    "descriptionPlaceholder": "กลุ่มนี้เกี่ยวกับอะไร?",
+    "optional": "ไม่บังคับ",
+    "creating": "กำลังสร้าง...",
+    "create": "สร้าง"
   },
   "groupDetail": {
     "transactions": "รายการ",

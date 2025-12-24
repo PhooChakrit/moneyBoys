@@ -7,12 +7,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useAuth } from "@/features/auth/context/AuthContext";
 
 export default function RegisterPage() {
   const t = useTranslations("auth");
   const router = useRouter();
   const params = useParams();
   const locale = params.locale as string;
+  const { register } = useAuth();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -38,21 +40,14 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
+      const result = await register(name, email, password);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Registration failed");
+      if (result.error) {
+        setError(result.error);
         return;
       }
 
       router.push(`/${locale}`);
-      router.refresh();
     } catch {
       setError("Something went wrong");
     } finally {

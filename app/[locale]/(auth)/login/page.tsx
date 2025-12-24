@@ -7,12 +7,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useAuth } from "@/features/auth/context/AuthContext";
 
 export default function LoginPage() {
   const t = useTranslations("auth");
   const router = useRouter();
   const params = useParams();
   const locale = params.locale as string;
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,21 +27,14 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const result = await login(email, password);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Login failed");
+      if (result.error) {
+        setError(result.error);
         return;
       }
 
       router.push(`/${locale}`);
-      router.refresh();
     } catch {
       setError("Something went wrong");
     } finally {

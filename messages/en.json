@@ -24,7 +24,21 @@
   "groups": {
     "title": "My Groups",
     "members": "members",
-    "peopleCount": "people"
+    "peopleCount": "people",
+    "noGroups": "You are not in any groups yet",
+    "joinGroupWithCode": "Join group with code",
+    "joinGroup": "Join Group",
+    "enterInviteCode": "Enter invite code",
+    "joining": "Joining...",
+    "join": "Join",
+    "createGroup": "Create New Group",
+    "groupName": "Group Name",
+    "groupNamePlaceholder": "e.g., Trip to Japan",
+    "description": "Description",
+    "descriptionPlaceholder": "What is this group for?",
+    "optional": "optional",
+    "creating": "Creating...",
+    "create": "Create"
   },
   "groupDetail": {
     "transactions": "Transactions",
