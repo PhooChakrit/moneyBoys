@@ -90,6 +90,7 @@ export async function getCurrentUser() {
   }
 
   // Return user without password
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { password: _, ...userWithoutPassword } = session.user;
   return userWithoutPassword;
 }

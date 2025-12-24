@@ -40,7 +40,7 @@ export function HomeScreen() {
   const locale = params.locale as string;
   const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
-    null
+    null,
   );
   const [loading, setLoading] = useState(true);
   const hasFetched = useRef(false);

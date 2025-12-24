@@ -58,4 +58,3 @@ export default function middleware(request: NextRequest) {
 export const config = {
   matcher: ["/", "/(en|th)/:path*", "/api/:path*"],
 };
-

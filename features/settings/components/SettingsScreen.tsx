@@ -22,7 +22,7 @@ export function SettingsScreen() {
 
   // Prevent hydration mismatch by only rendering theme-dependent UI after mount
   useEffect(() => {
-    setMounted(true);
+    requestAnimationFrame(() => setMounted(true));
   }, []);
 
   const handleLogout = async () => {

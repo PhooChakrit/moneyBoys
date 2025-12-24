@@ -89,6 +89,7 @@ export async function PATCH(request: Request) {
     });
 
     // Return user without password
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = updatedUser;
 
     return NextResponse.json({
