@@ -44,7 +44,12 @@ export default function middleware(request: NextRequest) {
   });
 
   // If not authenticated and trying to access protected route (skip semi-public routes)
-  if (!sessionToken && !isPublicRoute && !isSemiPublicRoute && pathname !== "/") {
+  if (
+    !sessionToken &&
+    !isPublicRoute &&
+    !isSemiPublicRoute &&
+    pathname !== "/"
+  ) {
     // Get the locale from the path or default to 'en'
     const locale = pathname.split("/")[1] || "en";
     const validLocale = ["en", "th"].includes(locale) ? locale : "en";

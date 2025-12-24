@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     if (!inviteCode && !groupId) {
       return NextResponse.json(
         { error: "Invite code or group ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -46,10 +46,7 @@ export async function GET(request: Request) {
     }
 
     if (!group) {
-      return NextResponse.json(
-        { error: "Group not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Group not found" }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -70,7 +67,7 @@ export async function GET(request: Request) {
     console.error("Preview group error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

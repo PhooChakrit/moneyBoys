@@ -293,7 +293,7 @@ export function GroupDetailScreen({ groupId }: GroupDetailScreenProps) {
                     i === 0 ? "bg-white" : "bg-gray-600"
                   }`}
                 />
-              )
+              ),
             )}
           </div>
         )}
@@ -459,7 +459,7 @@ export function GroupDetailScreen({ groupId }: GroupDetailScreenProps) {
                   try {
                     const res = await fetch(
                       `/api/groups/${groupId}/members?memberId=self`,
-                      { method: "DELETE" }
+                      { method: "DELETE" },
                     );
                     if (res.ok) {
                       router.push(`/${locale}/groups`);

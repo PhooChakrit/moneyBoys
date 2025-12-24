@@ -65,7 +65,7 @@ export default function JoinGroupPage() {
     if (user === null) {
       // Not logged in, redirect to login with return URL
       const returnUrl = encodeURIComponent(
-        `/${locale}/groups/join?${code ? `code=${code}` : `id=${groupId}`}`
+        `/${locale}/groups/join?${code ? `code=${code}` : `id=${groupId}`}`,
       );
       router.push(`/${locale}/login?returnUrl=${returnUrl}`);
       return;
