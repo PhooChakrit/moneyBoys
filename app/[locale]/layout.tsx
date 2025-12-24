@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import "../globals.css";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AuthProvider } from "@/features/auth/context/AuthContext";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 
@@ -35,28 +36,30 @@ export default async function LocaleLayout({
       <body className="antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <NextIntlClientProvider messages={messages}>
-            {/* Responsive container */}
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-              {/* Desktop sidebar nav - hidden on mobile/tablet */}
-              <aside className="hidden lg:block fixed left-0 top-0 h-screen w-[280px] border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 z-10">
-                <h1 className="mb-8 text-2xl font-bold text-gray-900 dark:text-white">
-                  MoneyBoy
-                </h1>
-                <nav className="space-y-2">
-                  <SidebarNav locale={locale} />
-                </nav>
-              </aside>
+            <AuthProvider>
+              {/* Responsive container */}
+              <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+                {/* Desktop sidebar nav - hidden on mobile/tablet */}
+                <aside className="hidden lg:block fixed left-0 top-0 h-screen w-[280px] border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 z-10">
+                  <h1 className="mb-8 text-2xl font-bold text-gray-900 dark:text-white">
+                    MoneyBoy
+                  </h1>
+                  <nav className="space-y-2">
+                    <SidebarNav locale={locale} />
+                  </nav>
+                </aside>
 
-              {/* Main content area */}
-              <main className="min-h-screen bg-white dark:bg-gray-900 lg:bg-gray-50 lg:dark:bg-gray-900 lg:ml-[280px]">
-                {children}
-              </main>
+                {/* Main content area */}
+                <main className="min-h-screen bg-white dark:bg-gray-900 lg:bg-gray-50 lg:dark:bg-gray-900 lg:ml-[280px]">
+                  {children}
+                </main>
 
-              {/* Bottom nav - hidden on desktop */}
-              <div className="lg:hidden">
-                <BottomNav />
+                {/* Bottom nav - hidden on desktop */}
+                <div className="lg:hidden">
+                  <BottomNav />
+                </div>
               </div>
-            </div>
+            </AuthProvider>
           </NextIntlClientProvider>
         </ThemeProvider>
       </body>
