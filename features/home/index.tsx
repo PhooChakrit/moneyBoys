@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -12,12 +13,64 @@ import {
   CheckIcon,
   ClockIcon,
 } from "@/components/icons";
-import { groups } from "@/lib/data";
+import { useAuth } from "@/features/auth/context/AuthContext";
+
+interface DashboardGroup {
+  id: string;
+  name: string;
+  members: number;
+  balance: number;
+  avatars: string[];
+  role: string;
+}
+
+interface DashboardData {
+  groups: DashboardGroup[];
+  summary: {
+    totalBalance: number;
+    youAreOwed: number;
+    youOwe: number;
+    netBalance: number;
+  };
+}
 
 export function HomeScreen() {
   const t = useTranslations("home");
   const params = useParams();
   const locale = params.locale as string;
+  const { user } = useAuth();
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null,
+  );
+  const [loading, setLoading] = useState(true);
+  const hasFetched = useRef(false);
+
+  useEffect(() => {
+    // Prevent double fetch in React strict mode
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+
+    async function fetchDashboard() {
+      try {
+        const res = await fetch("/api/dashboard");
+        if (res.ok) {
+          const data = await res.json();
+          setDashboardData(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchDashboard();
+  }, []);
+
+  const formatCurrency = (amount: number) => {
+    const sign = amount > 0 ? "+" : "";
+    return `${sign}${amount.toLocaleString()}฿`;
+  };
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] dark:bg-gray-900 pb-24 lg:pb-8">
@@ -29,7 +82,7 @@ export function HomeScreen() {
               {t("greeting")}
             </p>
             <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
-              {t("userName")}
+              {user?.name || t("userName")}
             </h1>
           </div>
           <div className="flex items-center gap-3">
@@ -38,7 +91,7 @@ export function HomeScreen() {
             </button>
             <Avatar className="w-10 h-10 border-2 border-emerald-500">
               <AvatarFallback className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
-                P
+                {user?.name?.charAt(0)?.toUpperCase() || "?"}
               </AvatarFallback>
             </Avatar>
           </div>
@@ -48,12 +101,20 @@ export function HomeScreen() {
         <Card className="mt-6 bg-gradient-to-br from-emerald-500 to-emerald-600 border-0 shadow-lg">
           <CardContent className="p-5">
             <p className="text-emerald-100 text-sm">{t("balanceTitle")}</p>
-            <h2 className="text-3xl font-bold text-white mt-1">
-              {t("balanceAmount")}
-            </h2>
-            <p className="text-emerald-200 text-sm mt-2">
-              {t("balanceSubtitle")}
-            </p>
+            {loading ? (
+              <div className="h-10 bg-emerald-400/30 rounded animate-pulse mt-1 w-32" />
+            ) : (
+              <>
+                <h2 className="text-3xl font-bold text-white mt-1">
+                  {formatCurrency(dashboardData?.summary?.totalBalance || 0)}
+                </h2>
+                <p className="text-emerald-200 text-sm mt-2">
+                  {dashboardData?.summary?.youOwe
+                    ? `${t("youOweToPay")} ${dashboardData.summary.youOwe.toLocaleString()}฿`
+                    : t("allSettled")}
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -141,43 +202,86 @@ export function HomeScreen() {
             {t("viewAll")}
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {groups.slice(0, 3).map((group) => (
-            <Link key={group.id} href={`/${locale}/groups/${group.id}`}>
-              <Card className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow dark:bg-gray-800">
+
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <Card
+                key={i}
+                className="border-0 shadow-sm dark:bg-gray-800 animate-pulse"
+              >
                 <CardContent className="p-4">
                   <div className="flex -space-x-2 mb-3">
-                    {group.avatars.slice(0, 3).map((a, i) => (
-                      <Avatar
-                        key={i}
-                        className="w-8 h-8 border-2 border-white dark:border-gray-800"
-                      >
-                        <AvatarFallback className="text-xs bg-gray-100 dark:bg-gray-700 dark:text-white">
-                          {a}
-                        </AvatarFallback>
-                      </Avatar>
+                    {[1, 2, 3].map((j) => (
+                      <div
+                        key={j}
+                        className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700"
+                      />
                     ))}
                   </div>
-                  <p className="font-medium text-gray-800 dark:text-white text-sm truncate">
-                    {group.name}
-                  </p>
-                  <p
-                    className={`text-sm mt-1 font-semibold ${
-                      group.balance > 0
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : group.balance < 0
-                          ? "text-red-500 dark:text-red-400"
-                          : "text-gray-400"
-                    }`}
-                  >
-                    {group.balance > 0 ? "+" : ""}
-                    {group.balance.toLocaleString()}฿
-                  </p>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-2" />
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16" />
                 </CardContent>
               </Card>
-            </Link>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : dashboardData?.groups && dashboardData.groups.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {dashboardData.groups.slice(0, 3).map((group) => (
+              <Link key={group.id} href={`/${locale}/groups/${group.id}`}>
+                <Card className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow dark:bg-gray-800">
+                  <CardContent className="p-4">
+                    <div className="flex -space-x-2 mb-3">
+                      {group.avatars.slice(0, 3).map((a, i) => (
+                        <Avatar
+                          key={i}
+                          className="w-8 h-8 border-2 border-white dark:border-gray-800"
+                        >
+                          <AvatarFallback className="text-xs bg-gray-100 dark:bg-gray-700 dark:text-white">
+                            {a}
+                          </AvatarFallback>
+                        </Avatar>
+                      ))}
+                    </div>
+                    <p className="font-medium text-gray-800 dark:text-white text-sm truncate">
+                      {group.name}
+                    </p>
+                    <p
+                      className={`text-sm mt-1 font-semibold ${
+                        group.balance > 0
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : group.balance < 0
+                            ? "text-red-500 dark:text-red-400"
+                            : "text-gray-400"
+                      }`}
+                    >
+                      {formatCurrency(group.balance)}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <Card className="border-0 shadow-sm dark:bg-gray-800">
+            <CardContent className="p-8 text-center">
+              <UsersIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+              <p className="text-gray-500 dark:text-gray-400 font-medium">
+                {t("noGroups") || "No groups yet"}
+              </p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">
+                {t("noGroupsDesc") ||
+                  "Create a group to start splitting expenses"}
+              </p>
+              <Link
+                href={`/${locale}/groups`}
+                className="inline-block mt-4 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+              >
+                {t("createGroup")}
+              </Link>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
