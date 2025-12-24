@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useParams, useRouter, usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -7,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { ChevronRightIcon } from "@/components/icons";
+import { useAuth } from "@/features/auth/context/AuthContext";
 
 export function SettingsScreen() {
   const t = useTranslations("settings");
@@ -15,6 +17,18 @@ export function SettingsScreen() {
   const pathname = usePathname();
   const locale = params.locale as string;
   const { theme, setTheme } = useTheme();
+  const { user, logout } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch by only rendering theme-dependent UI after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleLogout = async () => {
+    await logout();
+    router.push(`/${locale}/login`);
+  };
 
   const switchLocale = (newLocale: string) => {
     const newPathname = pathname.replace(`/${locale}`, `/${newLocale}`);
@@ -44,15 +58,15 @@ export function SettingsScreen() {
             <div className="flex items-center gap-4">
               <Avatar className="w-16 h-16">
                 <AvatarFallback className="text-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
-                  P
+                  {user?.name?.charAt(0)?.toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <p className="font-bold text-gray-800 dark:text-white text-lg">
-                  Pim Srisawat
+                  {user?.name || "Guest"}
                 </p>
                 <p className="text-gray-500 dark:text-gray-400">
-                  pim@email.com
+                  {user?.email || "Not logged in"}
                 </p>
               </div>
             </div>
@@ -75,7 +89,7 @@ export function SettingsScreen() {
                 <button
                   onClick={() => setTheme("light")}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    theme === "light"
+                    mounted && theme === "light"
                       ? "bg-emerald-500 text-white"
                       : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                   }`}
@@ -85,7 +99,7 @@ export function SettingsScreen() {
                 <button
                   onClick={() => setTheme("dark")}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    theme === "dark"
+                    mounted && theme === "dark"
                       ? "bg-emerald-500 text-white"
                       : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                   }`}
@@ -164,7 +178,10 @@ export function SettingsScreen() {
           </CardContent>
         </Card>
 
-        <button className="w-full mt-5 p-4 text-red-500 font-medium text-center hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+        <button
+          onClick={handleLogout}
+          className="w-full mt-5 p-4 text-red-500 font-medium text-center hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+        >
           {t("logout")}
         </button>
       </div>

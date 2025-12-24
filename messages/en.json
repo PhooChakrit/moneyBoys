@@ -5,6 +5,8 @@
     "balanceTitle": "People owe you",
     "balanceAmount": "1,250.00 ฿",
     "balanceSubtitle": "You need to pay -250 ฿",
+    "youOweToPay": "You need to pay",
+    "allSettled": "All settled up!",
     "quickActions": "What can you do",
     "createGroup": "Create Group",
     "createGroupDesc": "Gather friends",
@@ -15,7 +17,9 @@
     "history": "History",
     "historyDesc": "View past records",
     "recentGroups": "Recent Groups",
-    "viewAll": "View All"
+    "viewAll": "View All",
+    "noGroups": "No groups yet",
+    "noGroupsDesc": "Create a group to start splitting expenses"
   },
   "groups": {
     "title": "My Groups",
@@ -71,5 +75,41 @@
   "common": {
     "currency": "฿",
     "thb": "THB"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "name": "Name",
+    "namePlaceholder": "Enter your name",
+    "emailPlaceholder": "Enter your email",
+    "passwordPlaceholder": "Enter your password",
+    "confirmPasswordPlaceholder": "Confirm your password",
+    "loginTitle": "Welcome Back",
+    "loginSubtitle": "Sign in to continue to MoneyBoy",
+    "registerTitle": "Create Account",
+    "registerSubtitle": "Join MoneyBoy and start splitting expenses",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "loginButton": "Sign In",
+    "registerButton": "Create Account",
+    "loggingIn": "Signing in...",
+    "registering": "Creating account...",
+    "passwordMismatch": "Passwords do not match",
+    "passwordTooShort": "Password must be at least 6 characters"
+  },
+  "profile": {
+    "title": "Edit Profile",
+    "avatar": "Profile Picture",
+    "changeAvatar": "Change Picture",
+    "removeAvatar": "Remove",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "updateSuccess": "Profile updated successfully",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password"
   }
 }
