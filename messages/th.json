@@ -5,6 +5,8 @@
     "balanceTitle": "มีคนติดหนี้คุณ",
     "balanceAmount": "1,250.00 ฿",
     "balanceSubtitle": "ต้องจ่าย -250 ฿",
+    "youOweToPay": "คุณต้องจ่ายคืน",
+    "allSettled": "เคลียร์หนี้หมดแล้ว!",
     "quickActions": "ทำอะไรได้บ้าง",
     "createGroup": "สร้างกลุ่มใหม่",
     "createGroupDesc": "รวมกลุ่มเพื่อนๆ",
@@ -15,7 +17,9 @@
     "history": "ประวัติ",
     "historyDesc": "ดูรายการย้อนหลัง",
     "recentGroups": "กลุ่มล่าสุด",
-    "viewAll": "ดูทั้งหมด"
+    "viewAll": "ดูทั้งหมด",
+    "noGroups": "ยังไม่มีกลุ่ม",
+    "noGroupsDesc": "สร้างกลุ่มเพื่อเริ่มหารค่าใช้จ่าย"
   },
   "groups": {
     "title": "กลุ่มของฉัน",

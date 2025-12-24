@@ -5,6 +5,8 @@
     "balanceTitle": "People owe you",
     "balanceAmount": "1,250.00 ฿",
     "balanceSubtitle": "You need to pay -250 ฿",
+    "youOweToPay": "You need to pay",
+    "allSettled": "All settled up!",
     "quickActions": "What can you do",
     "createGroup": "Create Group",
     "createGroupDesc": "Gather friends",
@@ -15,7 +17,9 @@
     "history": "History",
     "historyDesc": "View past records",
     "recentGroups": "Recent Groups",
-    "viewAll": "View All"
+    "viewAll": "View All",
+    "noGroups": "No groups yet",
+    "noGroupsDesc": "Create a group to start splitting expenses"
   },
   "groups": {
     "title": "My Groups",
