@@ -8,6 +8,9 @@ const intlMiddleware = createIntlMiddleware(routing);
 // Routes that don't require authentication
 const publicRoutes = ["/login", "/register"];
 
+// Routes that handle their own auth (can be accessed but will redirect if needed)
+const semiPublicRoutes = ["/groups/join"];
+
 // Routes that should skip middleware entirely
 const apiAuthRoutes = ["/api/auth"];
 
@@ -34,8 +37,19 @@ export default function middleware(request: NextRequest) {
     return localePattern.test(pathname) || pathname === route;
   });
 
-  // If not authenticated and trying to access protected route
-  if (!sessionToken && !isPublicRoute && pathname !== "/") {
+  // Check if current path is a semi-public route (handles its own auth)
+  const isSemiPublicRoute = semiPublicRoutes.some((route) => {
+    const localePattern = new RegExp(`^/(en|th)${route}`);
+    return localePattern.test(pathname);
+  });
+
+  // If not authenticated and trying to access protected route (skip semi-public routes)
+  if (
+    !sessionToken &&
+    !isPublicRoute &&
+    !isSemiPublicRoute &&
+    pathname !== "/"
+  ) {
     // Get the locale from the path or default to 'en'
     const locale = pathname.split("/")[1] || "en";
     const validLocale = ["en", "th"].includes(locale) ? locale : "en";

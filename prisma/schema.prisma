@@ -45,6 +45,7 @@ model Group {
   id          String   @id @default(cuid())
   name        String
   description String?
+  inviteCode  String   @unique @default(cuid()) // Short code for joining group
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
