@@ -6,6 +6,54 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+// GET /api/groups/[id]/members - Get all members of a group
+export async function GET(request: Request, { params }: RouteParams) {
+  try {
+    const user = await getCurrentUser();
+    const { id } = await params;
+
+    if (!user) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    // Check if user is a member of this group
+    const membership = await prisma.groupMember.findUnique({
+      where: {
+        userId_groupId: {
+          userId: user.id,
+          groupId: id,
+        },
+      },
+    });
+
+    if (!membership) {
+      return NextResponse.json(
+        { error: "You are not a member of this group" },
+        { status: 403 },
+      );
+    }
+
+    // Get all members
+    const members = await prisma.groupMember.findMany({
+      where: { groupId: id },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, avatar: true },
+        },
+      },
+      orderBy: { joinedAt: "asc" },
+    });
+
+    return NextResponse.json({ members });
+  } catch (error) {
+    console.error("Get members error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}
+
 // POST /api/groups/[id]/members - Add a member to the group
 export async function POST(request: Request, { params }: RouteParams) {
   try {
