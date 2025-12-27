@@ -27,6 +27,14 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check if user has a password (Google users won't have one)
+    if (!user.password) {
+      return NextResponse.json(
+        { error: "Please sign in with Google" },
+        { status: 401 },
+      );
+    }
+
     // Verify password
     const isValid = await verifyPassword(password, user.password);
 

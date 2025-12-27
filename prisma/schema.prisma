@@ -12,9 +12,11 @@ datasource db {
 model User {
   id            String   @id @default(cuid())
   email         String   @unique
+  emailVerified Boolean  @default(false)
   name          String
-  password      String // bcrypt hashed password
+  password      String? // Optional: Google users won't have password
   avatar        String? // profile image URL from Cloudflare R2
+  image         String? // Better Auth profile image
   paymentMethod String? // payment info (bank account, PromptPay, etc.)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -25,6 +27,7 @@ model User {
   settlements  Settlement[]  @relation("SettlementFrom")
   settledBy    Settlement[]  @relation("SettlementTo")
   sessions     Session[]
+  accounts     Account[]
 
   @@map("users")
 }
@@ -34,11 +37,44 @@ model Session {
   token     String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verifications")
 }
 
 model Group {

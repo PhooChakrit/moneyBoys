@@ -19,6 +19,14 @@ export async function verifyPassword(
 
 // Session management
 export async function createSession(userId: string): Promise<string> {
+  // Clean up expired sessions for this user (keeps multi-device login working)
+  await prisma.session.deleteMany({
+    where: {
+      userId,
+      expiresAt: { lt: new Date() },
+    },
+  });
+
   // Generate a random token
   const token = crypto.randomUUID() + crypto.randomUUID();
   const expiresAt = new Date();

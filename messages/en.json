@@ -113,7 +113,10 @@
     "loggingIn": "Signing in...",
     "registering": "Creating account...",
     "passwordMismatch": "Passwords do not match",
-    "passwordTooShort": "Password must be at least 6 characters"
+    "passwordTooShort": "Password must be at least 6 characters",
+    "orContinueWith": "or continue with",
+    "googleSignIn": "Sign in with Google",
+    "googleSignUp": "Sign up with Google"
   },
   "profile": {
     "title": "Edit Profile",
