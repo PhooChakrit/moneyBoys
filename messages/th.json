@@ -53,6 +53,13 @@
     "paid": "จ่ายแล้ว",
     "markPaid": "จ่ายแล้ว"
   },
+  "history": {
+    "title": "ประวัติ",
+    "all": "ทั้งหมด",
+    "expenses": "รายจ่าย",
+    "settlements": "การชำระ",
+    "noHistory": "ยังไม่มีประวัติ"
+  },
   "settings": {
     "title": "ตั้งค่า",
     "language": "ภาษา",

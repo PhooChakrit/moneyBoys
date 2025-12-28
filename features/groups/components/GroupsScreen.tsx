@@ -249,8 +249,8 @@ export function GroupsScreen() {
                                 : "text-gray-400"
                           }`}
                         >
-                          {group.balance > 0 ? "+" : ""}
-                          {group.balance.toLocaleString()}฿
+                          {group.balance > 0 ? "+" : ""}฿
+                          {group.balance.toFixed(2)}
                         </p>
                         <ChevronRightIcon className="w-5 h-5 text-gray-400 ml-auto mt-1" />
                       </div>

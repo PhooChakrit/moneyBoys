@@ -55,6 +55,9 @@ export async function GET(request: Request, { params }: RouteParams) {
           orderBy: { date: "desc" },
           take: 20,
         },
+        settlements: {
+          where: { status: "completed" },
+        },
         _count: {
           select: { members: true, expenses: true },
         },
@@ -88,6 +91,20 @@ export async function GET(request: Request, { params }: RouteParams) {
           );
         }
       }
+    }
+
+    // Process settlements (completed payments between users)
+    for (const settlement of group.settlements) {
+      // Payer's balance goes up (they paid off debt)
+      memberBalances.set(
+        settlement.fromUserId,
+        (memberBalances.get(settlement.fromUserId) || 0) + settlement.amount,
+      );
+      // Receiver's balance goes down (they received payment)
+      memberBalances.set(
+        settlement.toUserId,
+        (memberBalances.get(settlement.toUserId) || 0) - settlement.amount,
+      );
     }
 
     // Build member details with balances

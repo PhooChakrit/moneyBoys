@@ -35,24 +35,46 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create expense with splits
+    // Convert amount to satang (integer) for precise calculation
+    const amountInSatang = Math.round(parseFloat(amount) * 100);
+    const totalShares = splits.reduce(
+      (sum: number, s: { share: number }) => sum + s.share,
+      0,
+    );
+
+    // Calculate splits in satang, distribute remainder to first split
+    let remainingSatang = amountInSatang;
+    const splitAmounts: number[] = [];
+
+    for (let i = 0; i < splits.length; i++) {
+      const split = splits[i];
+      if (i === splits.length - 1) {
+        // Last split gets the remainder to ensure total equals amount
+        splitAmounts.push(remainingSatang);
+      } else {
+        const splitSatang = Math.round(
+          (amountInSatang * split.share) / totalShares,
+        );
+        splitAmounts.push(splitSatang);
+        remainingSatang -= splitSatang;
+      }
+    }
+
+    // Create expense with splits (convert back to baht)
     const expense = await prisma.expense.create({
       data: {
         title,
-        amount: parseFloat(amount),
+        amount: amountInSatang / 100,
         paidById,
         groupId,
         splits: {
-          create: splits.map((split: { userId: string; share: number }) => ({
-            userId: split.userId,
-            amount:
-              (parseFloat(amount) * split.share) /
-              splits.reduce(
-                (sum: number, s: { share: number }) => sum + s.share,
-                0,
-              ),
-            share: split.share,
-          })),
+          create: splits.map(
+            (split: { userId: string; share: number }, index: number) => ({
+              userId: split.userId,
+              amount: splitAmounts[index] / 100,
+              share: split.share,
+            }),
+          ),
         },
       },
       include: {

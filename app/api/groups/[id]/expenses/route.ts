@@ -147,8 +147,17 @@ export async function GET(
       },
     });
 
-    // Calculate simplified debts
-    const simplifiedDebts = simplifyDebts(expenses, members);
+    // Get completed settlements
+    const settlements = await prisma.settlement.findMany({
+      where: { groupId, status: "completed" },
+    });
+
+    // Calculate simplified debts (including settlements)
+    const simplifiedDebts = simplifyDebtsWithSettlements(
+      expenses,
+      members,
+      settlements,
+    );
 
     return NextResponse.json({
       expenses,
@@ -162,4 +171,87 @@ export async function GET(
       { status: 500 },
     );
   }
+}
+
+// Simplify debts including settlements
+function simplifyDebtsWithSettlements(
+  expenses: Array<{
+    amount: number;
+    paidById: string;
+    splits: Array<{ userId: string; amount: number }>;
+  }>,
+  members: Array<{ userId: string; user: { id: string; name: string } }>,
+  settlements: Array<{ fromUserId: string; toUserId: string; amount: number }>,
+): SimplifiedDebt[] {
+  const netBalance: { [userId: string]: number } = {};
+
+  members.forEach((m) => {
+    netBalance[m.userId] = 0;
+  });
+
+  // Process expenses
+  expenses.forEach((expense) => {
+    netBalance[expense.paidById] =
+      (netBalance[expense.paidById] || 0) + expense.amount;
+    expense.splits.forEach((split) => {
+      netBalance[split.userId] = (netBalance[split.userId] || 0) - split.amount;
+    });
+  });
+
+  // Process settlements
+  settlements.forEach((settlement) => {
+    netBalance[settlement.fromUserId] =
+      (netBalance[settlement.fromUserId] || 0) + settlement.amount;
+    netBalance[settlement.toUserId] =
+      (netBalance[settlement.toUserId] || 0) - settlement.amount;
+  });
+
+  // Build user name map
+  const userNameMap: { [id: string]: string } = {};
+  members.forEach((m) => {
+    userNameMap[m.userId] = m.user.name;
+  });
+
+  // Greedy algorithm
+  const creditors: Array<{ id: string; amount: number }> = [];
+  const debtors: Array<{ id: string; amount: number }> = [];
+
+  Object.entries(netBalance).forEach(([userId, balance]) => {
+    if (balance > 0.01) {
+      creditors.push({ id: userId, amount: balance });
+    } else if (balance < -0.01) {
+      debtors.push({ id: userId, amount: -balance });
+    }
+  });
+
+  creditors.sort((a, b) => b.amount - a.amount);
+  debtors.sort((a, b) => b.amount - a.amount);
+
+  const simplifiedDebts: SimplifiedDebt[] = [];
+  let i = 0,
+    j = 0;
+
+  while (i < debtors.length && j < creditors.length) {
+    const debtor = debtors[i];
+    const creditor = creditors[j];
+    const amount = Math.min(debtor.amount, creditor.amount);
+
+    if (amount > 0.01) {
+      simplifiedDebts.push({
+        fromUserId: debtor.id,
+        fromUserName: userNameMap[debtor.id] || "Unknown",
+        toUserId: creditor.id,
+        toUserName: userNameMap[creditor.id] || "Unknown",
+        amount: Math.round(amount * 100) / 100,
+      });
+    }
+
+    debtor.amount -= amount;
+    creditor.amount -= amount;
+
+    if (debtor.amount < 0.01) i++;
+    if (creditor.amount < 0.01) j++;
+  }
+
+  return simplifiedDebts;
 }
