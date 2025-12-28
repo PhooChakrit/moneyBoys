@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useDebounceCallback } from "usehooks-ts";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ValidatedNumberInput } from "@/components/ui/validated-number-input";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -43,13 +45,14 @@ export function AddExpenseScreen() {
   const { user } = useAuth();
 
   const [title, setTitle] = useState("");
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState<number | null>(null);
   const [paidById, setPaidById] = useState("");
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [splitEqually, setSplitEqually] = useState(true);
   const [customAmounts, setCustomAmounts] = useState<{
-    [userId: string]: string;
+    [userId: string]: number | null;
   }>({});
+  const [lockedMembers, setLockedMembers] = useState<Set<string>>(new Set()); // Track manually edited members
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -121,6 +124,139 @@ export function AddExpenseScreen() {
     );
   };
 
+  // Auto-split remaining amount among unlocked members
+  const autoSplitAmounts = (
+    lockedUserAmounts: { [userId: string]: number | null },
+    lockedUserIds: Set<string>,
+    totalAmount: number,
+    allUserIds: string[]
+  ) => {
+    // Calculate total locked amount
+    const lockedTotal = Array.from(lockedUserIds).reduce(
+      (sum, userId) => sum + (lockedUserAmounts[userId] ?? 0),
+      0
+    );
+
+    // Calculate remaining amount to split
+    const remaining = Math.max(0, totalAmount - lockedTotal);
+    const unlockedUsers = allUserIds.filter((id) => !lockedUserIds.has(id));
+    const perPerson =
+      unlockedUsers.length > 0 ? remaining / unlockedUsers.length : 0;
+
+    // Build new amounts
+    const newAmounts: { [userId: string]: number | null } = {};
+    allUserIds.forEach((userId) => {
+      if (lockedUserIds.has(userId)) {
+        newAmounts[userId] = lockedUserAmounts[userId];
+      } else {
+        // Round to 2 decimal places
+        newAmounts[userId] = Math.round(perPerson * 100) / 100;
+      }
+    });
+
+    return newAmounts;
+  };
+
+  // Switch to custom mode with auto-filled equal amounts
+  const handleSwitchToCustom = () => {
+    setSplitEqually(false);
+    setLockedMembers(new Set()); // Reset locked members
+
+    if (amount !== null && selectedMembers.length > 0) {
+      const perPerson =
+        Math.round((amount / selectedMembers.length) * 100) / 100;
+      const newAmounts: { [userId: string]: number | null } = {};
+      selectedMembers.forEach((userId) => {
+        newAmounts[userId] = perPerson;
+      });
+      setCustomAmounts(newAmounts);
+    }
+  };
+
+  // Use ref to track locked members for debounce callback (always current)
+  const lockedMembersRef = useRef<Set<string>>(lockedMembers);
+  useEffect(() => {
+    lockedMembersRef.current = lockedMembers;
+  }, [lockedMembers]);
+
+  // Track currently editing user to avoid overwriting during typing
+  const editingUserRef = useRef<string | null>(null);
+
+  // Debounced auto-redistribution (1000ms delay)
+  const debouncedRedistribute = useDebounceCallback(() => {
+    if (amount !== null && selectedMembers.length > 0) {
+      const currentLocked = lockedMembersRef.current;
+
+      setCustomAmounts((currentAmounts) => {
+        // First, clamp locked amounts so they don't exceed total
+        const clampedAmounts = { ...currentAmounts };
+        let totalLocked = 0;
+
+        // Clamp each locked user's amount to ensure total doesn't exceed amount
+        Array.from(currentLocked).forEach((userId) => {
+          const userValue = clampedAmounts[userId] ?? 0;
+          const maxForUser = Math.max(0, amount - totalLocked);
+          clampedAmounts[userId] = Math.min(userValue, maxForUser);
+          totalLocked += clampedAmounts[userId] ?? 0;
+        });
+
+        // Then redistribute remaining to unlocked members
+        const redistributed = autoSplitAmounts(
+          clampedAmounts,
+          currentLocked,
+          amount,
+          selectedMembers
+        );
+        return redistributed;
+      });
+    }
+    // Clear editing user after redistribution
+    editingUserRef.current = null;
+  }, 1000);
+
+  // Handle custom amount change - show value immediately, redistribute after debounce
+  const handleCustomAmountChange = useCallback(
+    (userId: string, value: number | null) => {
+      // Mark this user as currently editing
+      editingUserRef.current = userId;
+
+      // Treat null (empty input) as 0 to keep user locked
+      const actualValue = value ?? 0;
+
+      // Lock this member if they have been manually edited
+      const newLocked = new Set(lockedMembers);
+      newLocked.add(userId); // Always lock when user edits
+      setLockedMembers(newLocked);
+      lockedMembersRef.current = newLocked;
+
+      // Update ONLY this user's amount immediately (responsive UI)
+      setCustomAmounts((prev) => ({
+        ...prev,
+        [userId]: actualValue,
+      }));
+
+      // Debounced redistribution for unlocked members
+      debouncedRedistribute();
+
+      // Auto-add to selected members if amount > 0
+      if (value !== null && value > 0 && !selectedMembers.includes(userId)) {
+        setSelectedMembers((prev) => [...prev, userId]);
+      }
+    },
+    [lockedMembers, selectedMembers, debouncedRedistribute]
+  );
+
+  // Calculate custom total for validation
+  const customTotal =
+    Object.values(customAmounts).reduce(
+      (sum, val) => (sum ?? 0) + (val ?? 0),
+      0 as number | null
+    ) ?? 0;
+
+  // Check if custom split exceeds amount
+  const isCustomOverAmount =
+    !splitEqually && amount !== null && customTotal > amount;
+
   const handleSubmit = async () => {
     if (
       !title ||
@@ -148,7 +284,7 @@ export function AddExpenseScreen() {
       } else {
         // Custom split - calculate shares based on custom amounts
         const totalCustom = selectedMembers.reduce(
-          (sum, userId) => sum + (parseFloat(customAmounts[userId]) || 0),
+          (sum, userId) => sum + (customAmounts[userId] || 0),
           0
         );
 
@@ -161,7 +297,7 @@ export function AddExpenseScreen() {
         // Warn if total doesn't match but still allow (API will handle calculation)
         splits = selectedMembers.map((userId) => ({
           userId,
-          share: parseFloat(customAmounts[userId]) || 0,
+          share: customAmounts[userId] || 0,
         }));
       }
 
@@ -171,7 +307,7 @@ export function AddExpenseScreen() {
         body: JSON.stringify({
           groupId: selectedGroupId,
           title,
-          amount: parseFloat(amount),
+          amount: amount,
           paidById,
           splits,
         }),
@@ -278,12 +414,12 @@ export function AddExpenseScreen() {
             {t("amount")}
           </label>
           <div className="relative">
-            <Input
-              type="number"
+            <ValidatedNumberInput
               placeholder="0"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="h-14 rounded-xl bg-gray-50 dark:bg-gray-800 border-0 text-2xl font-bold pr-12 dark:text-white"
+              onChange={setAmount}
+              positiveOnly
+              className="h-14 w-full rounded-xl bg-gray-50 dark:bg-gray-800 border-0 text-2xl font-bold pr-12 dark:text-white"
             />
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl">
               ฿
@@ -339,7 +475,7 @@ export function AddExpenseScreen() {
             <Button
               type="button"
               variant={!splitEqually ? "default" : "outline"}
-              onClick={() => setSplitEqually(false)}
+              onClick={handleSwitchToCustom}
               className={`rounded-full ${
                 !splitEqually ? "bg-emerald-500 hover:bg-emerald-600" : ""
               } dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800`}
@@ -369,14 +505,11 @@ export function AddExpenseScreen() {
                       </Badge>
                     ))}
                   </div>
-                  {amount && selectedMembers.length > 0 && (
+                  {amount !== null && selectedMembers.length > 0 && (
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                       Each person pays:{" "}
                       <span className="font-semibold">
-                        ฿
-                        {(parseFloat(amount) / selectedMembers.length).toFixed(
-                          2
-                        )}
+                        ฿{(amount / selectedMembers.length).toFixed(2)}
                       </span>
                     </p>
                   )}
@@ -393,27 +526,15 @@ export function AddExpenseScreen() {
                         {member.user.name}
                       </span>
                       <div className="relative w-28">
-                        <Input
-                          type="number"
+                        <ValidatedNumberInput
+                          min={0}
                           placeholder="0"
-                          value={customAmounts[member.userId] || ""}
-                          onChange={(e) => {
-                            setCustomAmounts((prev) => ({
-                              ...prev,
-                              [member.userId]: e.target.value,
-                            }));
-                            // Auto-add to selected members if amount > 0
-                            if (
-                              parseFloat(e.target.value) > 0 &&
-                              !selectedMembers.includes(member.userId)
-                            ) {
-                              setSelectedMembers((prev) => [
-                                ...prev,
-                                member.userId,
-                              ]);
-                            }
-                          }}
-                          className="h-10 rounded-lg bg-gray-50 dark:bg-gray-800 border-0 text-right pr-8 dark:text-white"
+                          value={customAmounts[member.userId] ?? null}
+                          onChange={(val) =>
+                            handleCustomAmountChange(member.userId, val)
+                          }
+                          positiveOnly
+                          className="h-10 w-full rounded-lg bg-gray-50 dark:bg-gray-800 border-0 text-right pr-8 dark:text-white"
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
                           ฿
@@ -428,25 +549,28 @@ export function AddExpenseScreen() {
                     </span>
                     <span
                       className={`font-semibold ${
-                        amount &&
+                        amount !== null &&
                         Math.abs(
                           Object.values(customAmounts).reduce(
-                            (sum, val) => sum + (parseFloat(val) || 0),
-                            0
-                          ) - parseFloat(amount)
+                            (sum, val) => (sum ?? 0) + (val ?? 0),
+                            0 as number | null
+                          )! - amount
                         ) < 0.01
                           ? "text-emerald-500"
                           : "text-orange-500"
                       }`}
                     >
                       ฿
-                      {Object.values(customAmounts)
-                        .reduce((sum, val) => sum + (parseFloat(val) || 0), 0)
-                        .toFixed(2)}
-                      {amount && (
+                      {(
+                        Object.values(customAmounts).reduce(
+                          (sum, val) => (sum ?? 0) + (val ?? 0),
+                          0 as number | null
+                        ) ?? 0
+                      ).toFixed(2)}
+                      {amount !== null && (
                         <span className="text-gray-400 font-normal">
                           {" "}
-                          / ฿{parseFloat(amount).toFixed(2)}
+                          / ฿{amount.toFixed(2)}
                         </span>
                       )}
                     </span>
@@ -461,6 +585,14 @@ export function AddExpenseScreen() {
           )}
         </div>
 
+        {/* Warning for over-allocation */}
+        {isCustomOverAmount && (
+          <p className="text-red-500 dark:text-red-400 text-sm font-medium">
+            ⚠️ Total split (฿{customTotal.toFixed(2)}) exceeds expense amount (฿
+            {amount?.toFixed(2)})
+          </p>
+        )}
+
         {/* Submit button */}
         <Button
           onClick={handleSubmit}
@@ -469,7 +601,8 @@ export function AddExpenseScreen() {
             !selectedGroupId ||
             !title ||
             !amount ||
-            !selectedMembers.length
+            !selectedMembers.length ||
+            isCustomOverAmount
           }
           className="w-full h-14 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-lg font-semibold mt-4 disabled:opacity-50"
         >

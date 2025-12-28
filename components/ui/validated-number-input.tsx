@@ -1,10 +1,9 @@
 import { InputHTMLAttributes } from "react";
 
-interface ValidatedNumberInputProps
-  extends Omit<
-    InputHTMLAttributes<HTMLInputElement>,
-    "type" | "onChange" | "value"
-  > {
+interface ValidatedNumberInputProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "type" | "onChange" | "value"
+> {
   value: number | null;
   onChange: (value: number | null) => void;
   numberMode?: "int" | "float";
@@ -29,10 +28,20 @@ export function ValidatedNumberInput({
       return;
     }
 
-    const num =
+    let num =
       numberMode === "int" ? parseInt(rawValue, 10) : parseFloat(rawValue);
 
-    onChange(isNaN(num) ? null : num);
+    if (isNaN(num)) {
+      onChange(null);
+      return;
+    }
+
+    // Only enforce min (no negative values), max is handled by debounce
+    if (min !== undefined && num < min) {
+      num = min;
+    }
+
+    onChange(num);
   };
 
   return (
@@ -41,7 +50,7 @@ export function ValidatedNumberInput({
       className={`w-24 rounded border border-gray-300 px-2 py-1 ${className}`}
       value={value ?? ""}
       min={min}
-      max={max}
+      max={max ?? undefined}
       onKeyDown={(e) => {
         const allowedKeys = [
           "Backspace",
