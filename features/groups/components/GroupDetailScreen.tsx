@@ -274,8 +274,8 @@ export function GroupDetailScreen({ groupId }: GroupDetailScreenProps) {
                 <span className="text-sm font-bold text-white">
                   {member.balance < 0 ? "" : member.balance > 0 ? "+" : ""}
                   {member.balance === 0
-                    ? "THB 0"
-                    : `THB ${Math.abs(member.balance).toLocaleString()}`}
+                    ? "฿0.00"
+                    : `฿${Math.abs(member.balance).toFixed(2)}`}
                 </span>
               </div>
             </div>
@@ -303,12 +303,86 @@ export function GroupDetailScreen({ groupId }: GroupDetailScreenProps) {
           <span className="text-lg font-medium">{group.name}</span>
           <button
             onClick={() => setInviteDialogOpen(true)}
-            className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center"
+            className="text-sm text-gray-300 hover:text-white underline"
           >
-            <PlusIcon className="w-4 h-4 text-gray-300" />
+            Invite / Settings
           </button>
         </div>
       </div>
+
+      {/* Debts Section - Now right after bubble */}
+      {debts.length > 0 && (
+        <>
+          <div className="bg-white dark:bg-gray-800 px-5 lg:px-8 py-4 lg:py-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-gray-800 dark:text-white font-semibold">
+                Debts
+              </h3>
+              <Link
+                href={`/${locale}/add-expense?groupId=${groupId}`}
+                className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center shadow-md"
+              >
+                <PlusIcon className="w-5 h-5 text-white" />
+              </Link>
+            </div>
+
+            {debts.map((debt, i) => (
+              <div key={i} className="flex items-center justify-between py-3">
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-12 h-12">
+                    <AvatarFallback className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+                      {debt.from[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold text-gray-800 dark:text-white">
+                      {debt.from}
+                    </p>
+                    <p className="text-amber-600 dark:text-amber-400 font-bold">
+                      ฿{debt.fromBalance.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center">
+                  <ArrowRightIcon className="w-5 h-5 text-gray-400 mx-4" />
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="font-semibold text-gray-800 dark:text-white">
+                      {debt.to}
+                    </p>
+                  </div>
+                  <Avatar className="w-12 h-12">
+                    <AvatarFallback className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
+                      {debt.to[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Separator className="dark:bg-gray-700" />
+        </>
+      )}
+
+      {/* All Settled Message */}
+      {debts.length === 0 && (
+        <div className="bg-white dark:bg-gray-800 px-5 lg:px-8 py-8 text-center">
+          <p className="text-4xl mb-2">🎉</p>
+          <p className="text-gray-500 dark:text-gray-400 font-medium">
+            All settled up!
+          </p>
+          <Link
+            href={`/${locale}/add-expense?groupId=${groupId}`}
+            className="inline-block mt-4 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors"
+          >
+            Add Expense
+          </Link>
+        </div>
+      )}
+
+      <Separator className="dark:bg-gray-700" />
 
       {/* Transactions Section */}
       <div className="bg-white dark:bg-gray-800 px-5 lg:px-8 py-4 lg:py-6">
@@ -352,7 +426,8 @@ export function GroupDetailScreen({ groupId }: GroupDetailScreenProps) {
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-amber-600 dark:text-amber-400">
-                    {tx.currency} {tx.amount.toLocaleString()}
+                    {tx.currency === "THB" ? "฿" : tx.currency}{" "}
+                    {tx.amount.toFixed(2)}
                   </p>
                   <div className="flex -space-x-1 mt-1 justify-end">
                     {tx.participants.slice(0, 4).map((p, i) => (
@@ -376,60 +451,6 @@ export function GroupDetailScreen({ groupId }: GroupDetailScreenProps) {
           <button className="w-full text-center text-emerald-600 dark:text-emerald-400 font-medium py-3 mt-2">
             Show all
           </button>
-        )}
-      </div>
-
-      <Separator className="dark:bg-gray-700" />
-
-      {/* Debts Section */}
-      <div className="bg-white dark:bg-gray-800 px-5 lg:px-8 py-4 lg:py-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-gray-800 dark:text-white font-semibold">Debts</h3>
-          <Link
-            href={`/${locale}/add-expense?groupId=${groupId}`}
-            className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center shadow-md"
-          >
-            <PlusIcon className="w-5 h-5 text-white" />
-          </Link>
-        </div>
-
-        {debts.length === 0 ? (
-          <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-            All settled up! 🎉
-          </p>
-        ) : (
-          debts.map((debt, i) => (
-            <div key={i} className="flex items-center justify-between py-3">
-              <div className="flex items-center gap-3">
-                <Avatar className="w-12 h-12">
-                  <AvatarFallback className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">
-                    {debt.from[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold text-gray-800 dark:text-white">
-                    {debt.from}
-                  </p>
-                  <p className="text-amber-600 dark:text-amber-400 font-bold">
-                    THB {debt.fromBalance.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-              <ArrowRightIcon className="w-5 h-5 text-gray-400 mx-4" />
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <p className="font-semibold text-gray-800 dark:text-white">
-                    {debt.to}
-                  </p>
-                </div>
-                <Avatar className="w-12 h-12">
-                  <AvatarFallback className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
-                    {debt.to[0]}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
-            </div>
-          ))
         )}
       </div>
 

@@ -83,12 +83,42 @@ export async function GET() {
       );
     }
 
+    // Get completed settlements (payments made)
+    const completedSettlements = await prisma.settlement.findMany({
+      where: {
+        groupId: { in: groupIds },
+        status: "completed",
+        OR: [{ fromUserId: user.id }, { toUserId: user.id }],
+      },
+      select: { groupId: true, fromUserId: true, toUserId: true, amount: true },
+    });
+
+    // Calculate settlement impact by group
+    const settlementByGroupMap = new Map<string, number>();
+    for (const settlement of completedSettlements) {
+      const currentBalance = settlementByGroupMap.get(settlement.groupId) || 0;
+      if (settlement.fromUserId === user.id) {
+        // User paid someone - reduces what they owe
+        settlementByGroupMap.set(
+          settlement.groupId,
+          currentBalance + settlement.amount,
+        );
+      } else {
+        // User received payment - reduces what they're owed
+        settlementByGroupMap.set(
+          settlement.groupId,
+          currentBalance - settlement.amount,
+        );
+      }
+    }
+
     // Build response
     const groups = groupMemberships.map((membership) => {
       const group = membership.group;
       const paid = paidByGroupMap.get(group.id) || 0;
       const owes = owesByGroupMap.get(group.id) || 0;
-      const balance = paid - owes;
+      const settlementAdjustment = settlementByGroupMap.get(group.id) || 0;
+      const balance = paid - owes + settlementAdjustment;
 
       return {
         id: group.id,

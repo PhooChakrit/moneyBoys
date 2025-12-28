@@ -53,6 +53,13 @@
     "paid": "Paid",
     "markPaid": "Mark as Paid"
   },
+  "history": {
+    "title": "History",
+    "all": "All",
+    "expenses": "Expenses",
+    "settlements": "Settlements",
+    "noHistory": "No history yet"
+  },
   "settings": {
     "title": "Settings",
     "language": "Language",

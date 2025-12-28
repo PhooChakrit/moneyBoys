@@ -177,19 +177,21 @@ export function HomeScreen() {
             </Card>
           </Link>
 
-          <Card className="bg-[#F3F4F6] dark:bg-gray-800 border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="w-10 h-10 rounded-xl bg-gray-500/20 flex items-center justify-center mb-3">
-                <ClockIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              </div>
-              <p className="font-semibold text-gray-800 dark:text-white">
-                {t("history")}
-              </p>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-                {t("historyDesc")}
-              </p>
-            </CardContent>
-          </Card>
+          <Link href={`/${locale}/history`}>
+            <Card className="bg-[#F3F4F6] dark:bg-gray-800 border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="w-10 h-10 rounded-xl bg-gray-500/20 flex items-center justify-center mb-3">
+                  <ClockIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                </div>
+                <p className="font-semibold text-gray-800 dark:text-white">
+                  {t("history")}
+                </p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+                  {t("historyDesc")}
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
       </div>
 
