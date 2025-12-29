@@ -70,6 +70,7 @@
     "groupPermissions": "Group Permissions",
     "expenseHistory": "Expense History",
     "paymentHistory": "Payment History",
+    "paymentMethod": "Payment Method",
     "account": "Account",
     "logout": "Logout"
   },
@@ -135,5 +136,19 @@
     "updateSuccess": "Profile updated successfully",
     "currentPassword": "Current Password",
     "newPassword": "New Password"
+  },
+  "paymentMethod": {
+    "title": "Payment Method",
+    "bankName": "Bank Name",
+    "bankNamePlaceholder": "e.g., Bangkok Bank",
+    "bankAccount": "Bank Account",
+    "bankAccountPlaceholder": "e.g., 123-456-7890",
+    "qrCode": "QR Code for Payment",
+    "uploadQr": "Upload QR Code",
+    "changeQr": "Change QR Code",
+    "removeQr": "Remove",
+    "save": "Save",
+    "saving": "Saving...",
+    "saveSuccess": "Payment method saved successfully"
   }
 }

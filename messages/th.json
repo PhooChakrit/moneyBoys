@@ -70,6 +70,7 @@
     "groupPermissions": "สิทธิ์กลุ่ม",
     "expenseHistory": "ประวัติรายจ่าย",
     "paymentHistory": "ประวัติการจ่าย",
+    "paymentMethod": "วิธีรับเงิน",
     "account": "บัญชี",
     "logout": "ออกจากระบบ"
   },
@@ -135,5 +136,19 @@
     "updateSuccess": "อัปเดตโปรไฟล์สำเร็จ",
     "currentPassword": "รหัสผ่านปัจจุบัน",
     "newPassword": "รหัสผ่านใหม่"
+  },
+  "paymentMethod": {
+    "title": "วิธีรับเงิน",
+    "bankName": "ชื่อธนาคาร",
+    "bankNamePlaceholder": "เช่น ธนาคารกรุงเทพ",
+    "bankAccount": "เลขบัญชี",
+    "bankAccountPlaceholder": "เช่น 123-456-7890",
+    "qrCode": "QR Code สำหรับรับเงิน",
+    "uploadQr": "อัปโหลด QR Code",
+    "changeQr": "เปลี่ยน QR Code",
+    "removeQr": "ลบ",
+    "save": "บันทึก",
+    "saving": "กำลังบันทึก...",
+    "saveSuccess": "บันทึกวิธีรับเงินสำเร็จ"
   }
 }

@@ -60,7 +60,7 @@ export function AddExpenseScreen() {
   // Group selection state
   const [groups, setGroups] = useState<GroupOption[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(
-    urlGroupId
+    urlGroupId,
   );
 
   // Fetch user's groups only
@@ -74,7 +74,7 @@ export function AddExpenseScreen() {
             data.groups.map((g: { id: string; name: string }) => ({
               id: g.id,
               name: g.name,
-            }))
+            })),
           );
         }
       } catch (err) {
@@ -120,7 +120,7 @@ export function AddExpenseScreen() {
     setSelectedMembers((prev) =>
       prev.includes(userId)
         ? prev.filter((id) => id !== userId)
-        : [...prev, userId]
+        : [...prev, userId],
     );
   };
 
@@ -129,12 +129,12 @@ export function AddExpenseScreen() {
     lockedUserAmounts: { [userId: string]: number | null },
     lockedUserIds: Set<string>,
     totalAmount: number,
-    allUserIds: string[]
+    allUserIds: string[],
   ) => {
     // Calculate total locked amount
     const lockedTotal = Array.from(lockedUserIds).reduce(
       (sum, userId) => sum + (lockedUserAmounts[userId] ?? 0),
-      0
+      0,
     );
 
     // Calculate remaining amount to split
@@ -205,7 +205,7 @@ export function AddExpenseScreen() {
           clampedAmounts,
           currentLocked,
           amount,
-          selectedMembers
+          selectedMembers,
         );
         return redistributed;
       });
@@ -243,14 +243,14 @@ export function AddExpenseScreen() {
         setSelectedMembers((prev) => [...prev, userId]);
       }
     },
-    [lockedMembers, selectedMembers, debouncedRedistribute]
+    [lockedMembers, selectedMembers, debouncedRedistribute],
   );
 
   // Calculate custom total for validation
   const customTotal =
     Object.values(customAmounts).reduce(
       (sum, val) => (sum ?? 0) + (val ?? 0),
-      0 as number | null
+      0 as number | null,
     ) ?? 0;
 
   // Check if custom split exceeds amount
@@ -285,7 +285,7 @@ export function AddExpenseScreen() {
         // Custom split - calculate shares based on custom amounts
         const totalCustom = selectedMembers.reduce(
           (sum, userId) => sum + (customAmounts[userId] || 0),
-          0
+          0,
         );
 
         if (totalCustom <= 0) {
@@ -553,8 +553,8 @@ export function AddExpenseScreen() {
                         Math.abs(
                           Object.values(customAmounts).reduce(
                             (sum, val) => (sum ?? 0) + (val ?? 0),
-                            0 as number | null
-                          )! - amount
+                            0 as number | null,
+                          )! - amount,
                         ) < 0.01
                           ? "text-emerald-500"
                           : "text-orange-500"
@@ -564,7 +564,7 @@ export function AddExpenseScreen() {
                       {(
                         Object.values(customAmounts).reduce(
                           (sum, val) => (sum ?? 0) + (val ?? 0),
-                          0 as number | null
+                          0 as number | null,
                         ) ?? 0
                       ).toFixed(2)}
                       {amount !== null && (
