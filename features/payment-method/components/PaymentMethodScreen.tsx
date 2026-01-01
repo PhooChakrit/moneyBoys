@@ -12,7 +12,7 @@ import { ArrowLeftIcon } from "@/components/icons";
 interface PaymentMethod {
   bankName: string | null;
   bankAccount: string | null;
-  qrCodeUrl: string | null;
+  qrCodeUrl: string | null; // This stores the object KEY, not full URL
 }
 
 export function PaymentMethodScreen() {
@@ -27,12 +27,32 @@ export function PaymentMethodScreen() {
   const [uploading, setUploading] = useState(false);
   const [bankName, setBankName] = useState("");
   const [bankAccount, setBankAccount] = useState("");
-  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  // qrCodeKey stores the R2 object key (e.g., "qrcodes/userId/file.png")
+  const [qrCodeKey, setQrCodeKey] = useState<string | null>(null);
+  // qrPreview stores either a local blob URL (during upload) or signed URL (after load)
   const [qrPreview, setQrPreview] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPaymentMethod();
   }, []);
+
+  // Fetch signed URL for an image key
+  const getSignedUrl = async (key: string): Promise<string | null> => {
+    try {
+      const response = await fetch("/api/image-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        return data.url;
+      }
+    } catch (error) {
+      console.error("Failed to get signed URL:", error);
+    }
+    return null;
+  };
 
   const fetchPaymentMethod = async () => {
     try {
@@ -43,8 +63,15 @@ export function PaymentMethodScreen() {
         if (pm) {
           setBankName(pm.bankName || "");
           setBankAccount(pm.bankAccount || "");
-          setQrCodeUrl(pm.qrCodeUrl);
-          setQrPreview(pm.qrCodeUrl);
+
+          // If there's a saved QR code key, get a signed URL to display it
+          if (pm.qrCodeUrl) {
+            setQrCodeKey(pm.qrCodeUrl);
+            const signedUrl = await getSignedUrl(pm.qrCodeUrl);
+            if (signedUrl) {
+              setQrPreview(signedUrl);
+            }
+          }
         }
       }
     } catch (error) {
@@ -58,7 +85,7 @@ export function PaymentMethodScreen() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Show preview immediately
+    // Show local preview immediately
     const reader = new FileReader();
     reader.onload = (event) => {
       setQrPreview(event.target?.result as string);
@@ -68,7 +95,7 @@ export function PaymentMethodScreen() {
     // Upload to R2 using presigned URL
     setUploading(true);
     try {
-      // Get presigned URL
+      // Get presigned URL for upload
       const presignResponse = await fetch("/api/upload/presign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -88,7 +115,7 @@ export function PaymentMethodScreen() {
         throw new Error("Failed to get upload URL");
       }
 
-      const { uploadUrl, publicUrl } = await presignResponse.json();
+      const { uploadUrl, key } = await presignResponse.json();
 
       // Upload directly to R2
       const uploadResponse = await fetch(uploadUrl, {
@@ -103,17 +130,30 @@ export function PaymentMethodScreen() {
         throw new Error("Failed to upload file");
       }
 
-      setQrCodeUrl(publicUrl);
+      // Store the key (not the full URL)
+      setQrCodeKey(key);
+
+      // Get signed URL for display
+      const signedUrl = await getSignedUrl(key);
+      if (signedUrl) {
+        setQrPreview(signedUrl);
+      }
     } catch (error) {
       console.error("Upload failed:", error);
-      setQrPreview(qrCodeUrl); // Revert preview on error
+      // Revert to previous state on error
+      if (qrCodeKey) {
+        const signedUrl = await getSignedUrl(qrCodeKey);
+        setQrPreview(signedUrl);
+      } else {
+        setQrPreview(null);
+      }
     } finally {
       setUploading(false);
     }
   };
 
   const handleRemoveQr = () => {
-    setQrCodeUrl(null);
+    setQrCodeKey(null);
     setQrPreview(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -129,7 +169,7 @@ export function PaymentMethodScreen() {
         body: JSON.stringify({
           bankName: bankName || null,
           bankAccount: bankAccount || null,
-          qrCodeUrl: qrCodeUrl || null,
+          qrCodeUrl: qrCodeKey || null, // Save the key, not URL
         }),
       });
 

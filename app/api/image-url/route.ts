@@ -32,8 +32,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing image key" }, { status: 400 });
     }
 
-    // Step 3: Normalize the key (remove leading slash, collapse double slashes)
-    const normalizedKey = key
+    // Step 3: Normalize the key
+    // Handle legacy data: if it's a full URL, extract just the path
+    let normalizedKey = key;
+    
+    // Remove any URL prefix (handles both cdn.moneyboys.com and other domains)
+    if (normalizedKey.startsWith("http://") || normalizedKey.startsWith("https://")) {
+      try {
+        const url = new URL(normalizedKey);
+        normalizedKey = url.pathname;
+      } catch {
+        // If URL parsing fails, continue with the original key
+      }
+    }
+    
+    // Remove leading slashes and collapse multiple slashes
+    normalizedKey = normalizedKey
       .replace(/^\/+/, "")      // Remove leading slashes
       .replace(/\/+/g, "/");    // Collapse multiple slashes
 
