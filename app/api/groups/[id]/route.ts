@@ -40,7 +40,15 @@ export async function GET(request: Request, { params }: RouteParams) {
         members: {
           include: {
             user: {
-              select: { id: true, name: true, email: true, avatar: true },
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                avatar: true,
+                bankName: true,
+                bankAccount: true,
+                qrCodeUrl: true,
+              },
             },
           },
           orderBy: { joinedAt: "asc" },
@@ -118,6 +126,9 @@ export async function GET(request: Request, { params }: RouteParams) {
         role: m.role,
         balance,
         initials: m.user.name.charAt(0).toUpperCase(),
+        bankName: m.user.bankName,
+        bankAccount: m.user.bankAccount,
+        qrCodeUrl: m.user.qrCodeUrl,
       };
     });
 

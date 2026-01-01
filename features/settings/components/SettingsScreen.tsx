@@ -38,9 +38,15 @@ export function SettingsScreen() {
   const settingsItems = [
     // { icon: "🔗", label: t("inviteFriends"), value: "" },
     // { icon: "🔒", label: t("groupPermissions"), value: "" },
-    { icon: "📜", label: t("expenseHistory"), value: "" },
-    { icon: "💳", label: t("paymentHistory"), value: "" },
-    { icon: "👤", label: t("account"), value: "" },
+    {
+      icon: "💳",
+      label: t("paymentMethod"),
+      value: "",
+      href: `/${locale}/payment-method`,
+    },
+    // { icon: "📜", label: t("expenseHistory"), value: "" },
+    // { icon: "💰", label: t("paymentHistory"), value: "" },
+    // { icon: "👤", label: t("account"), value: "" },
   ];
 
   return (
@@ -156,7 +162,10 @@ export function SettingsScreen() {
           <CardContent className="p-0">
             {settingsItems.map((item, i) => (
               <div key={i}>
-                <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+                <div
+                  onClick={() => item.href && router.push(item.href)}
+                  className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
                   <div className="flex items-center gap-3">
                     <span className="text-xl">{item.icon}</span>
                     <span className="text-gray-800 dark:text-white">

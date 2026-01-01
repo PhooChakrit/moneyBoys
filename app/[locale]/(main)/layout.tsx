@@ -15,7 +15,7 @@ export default async function MainLayout({
       {/* Desktop sidebar nav - hidden on mobile/tablet */}
       <aside className="hidden lg:block fixed left-0 top-0 h-screen w-[280px] border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 z-10">
         <h1 className="mb-8 text-2xl font-bold text-gray-900 dark:text-white">
-          MoneyBoy
+          FriendPay
         </h1>
         <nav className="space-y-2">
           <SidebarNav locale={locale} />

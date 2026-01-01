@@ -42,6 +42,7 @@ export function AddExpenseScreen() {
   const searchParams = useSearchParams();
   const locale = params.locale as string;
   const urlGroupId = searchParams.get("groupId");
+  const editId = searchParams.get("editId"); // Edit mode
   const { user } = useAuth();
 
   const [title, setTitle] = useState("");
@@ -56,6 +57,8 @@ export function AddExpenseScreen() {
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [loadingExpense, setLoadingExpense] = useState(false);
 
   // Group selection state
   const [groups, setGroups] = useState<GroupOption[]>([]);
@@ -107,6 +110,62 @@ export function AddExpenseScreen() {
 
     fetchMembers();
   }, [selectedGroupId, user?.id]);
+
+  // Fetch expense data when editing
+  useEffect(() => {
+    if (!editId) return;
+
+    const fetchExpense = async () => {
+      setLoadingExpense(true);
+      try {
+        const res = await fetch(`/api/expenses/${editId}`);
+        if (res.ok) {
+          const data = await res.json();
+          const expense = data.expense;
+          setTitle(expense.title);
+          setAmount(expense.amount);
+          setPaidById(expense.paidById);
+          setSelectedGroupId(expense.groupId);
+          setIsEditMode(true);
+
+          // Set up splits
+          if (expense.splits && expense.splits.length > 0) {
+            const splitUserIds = expense.splits.map(
+              (s: { userId: string }) => s.userId
+            );
+            setSelectedMembers(splitUserIds);
+
+            // Check if custom split (not all equal)
+            const amounts = expense.splits.map(
+              (s: { amount: number }) => s.amount
+            );
+            const isCustom = amounts.some(
+              (a: number, i: number) => i > 0 && Math.abs(a - amounts[0]) > 0.01
+            );
+
+            if (isCustom) {
+              setSplitEqually(false);
+              const amountsMap: { [userId: string]: number | null } = {};
+              expense.splits.forEach(
+                (s: { userId: string; amount: number }) => {
+                  amountsMap[s.userId] = s.amount;
+                }
+              );
+              setCustomAmounts(amountsMap);
+            }
+          }
+        } else {
+          setError("Failed to load expense");
+        }
+      } catch {
+        setError("Failed to load expense");
+      } finally {
+        setLoadingExpense(false);
+      }
+    };
+
+    fetchExpense();
+  }, [editId]);
 
   // Handle group selection - just update state, useEffect fetches members
   const handleGroupSelect = (groupId: string) => {
@@ -301,21 +360,39 @@ export function AddExpenseScreen() {
         }));
       }
 
-      const res = await fetch("/api/expenses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          groupId: selectedGroupId,
-          title,
-          amount: amount,
-          paidById,
-          splits,
-        }),
-      });
+      let res;
+      if (isEditMode && editId) {
+        // Update existing expense
+        res = await fetch(`/api/expenses/${editId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            amount: amount,
+            paidById,
+            splits,
+          }),
+        });
+      } else {
+        // Create new expense
+        res = await fetch("/api/expenses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            groupId: selectedGroupId,
+            title,
+            amount: amount,
+            paidById,
+            splits,
+          }),
+        });
+      }
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Failed to add expense");
+        setError(
+          data.error || `Failed to ${isEditMode ? "update" : "add"} expense`
+        );
         return;
       }
 
@@ -344,7 +421,7 @@ export function AddExpenseScreen() {
             <ArrowLeftIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
           </Link>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-            {t("title")}
+            {isEditMode ? t("editTitle") : t("title")}
           </h1>
         </div>
       </div>
@@ -360,15 +437,15 @@ export function AddExpenseScreen() {
         {!urlGroupId && (
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-              Group
+              {t("group")}
             </label>
             {groups.length === 0 ? (
               <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 text-center">
                 <p className="text-gray-500 dark:text-gray-400 mb-3">
-                  You need to join a group first
+                  {t("noGroupsMessage")}
                 </p>
                 <Link href={`/${locale}/groups`}>
-                  <Button size="sm">Go to Groups</Button>
+                  <Button size="sm">{t("goToGroups")}</Button>
                 </Link>
               </div>
             ) : (
@@ -377,7 +454,7 @@ export function AddExpenseScreen() {
                 onValueChange={handleGroupSelect}
               >
                 <SelectTrigger className="w-full h-12 rounded-xl bg-gray-50 dark:bg-gray-800 border-0 text-gray-900 dark:text-white">
-                  <SelectValue placeholder="Select a group..." />
+                  <SelectValue placeholder={t("selectGroup")} />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-gray-800">
                   {groups.map((group) => (
@@ -451,7 +528,7 @@ export function AddExpenseScreen() {
             </div>
           ) : (
             <p className="text-gray-400 dark:text-gray-500 text-sm py-2">
-              Select a group first
+              {t("selectGroupFirst")}
             </p>
           )}
         </div>
@@ -580,7 +657,7 @@ export function AddExpenseScreen() {
             </>
           ) : (
             <p className="text-gray-400 dark:text-gray-500 text-sm">
-              Select a group first
+              {t("selectGroupFirst")}
             </p>
           )}
         </div>
@@ -598,6 +675,7 @@ export function AddExpenseScreen() {
           onClick={handleSubmit}
           disabled={
             submitting ||
+            loadingExpense ||
             !selectedGroupId ||
             !title ||
             !amount ||
@@ -606,7 +684,13 @@ export function AddExpenseScreen() {
           }
           className="w-full h-14 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-lg font-semibold mt-4 disabled:opacity-50"
         >
-          {submitting ? "Adding..." : t("submit")}
+          {submitting
+            ? isEditMode
+              ? t("updating")
+              : "Adding..."
+            : isEditMode
+              ? t("editSubmit")
+              : t("submit")}
         </Button>
       </div>
     </div>
