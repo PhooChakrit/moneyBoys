@@ -44,9 +44,9 @@ export function SettingsScreen() {
       value: "",
       href: `/${locale}/payment-method`,
     },
-    { icon: "📜", label: t("expenseHistory"), value: "" },
-    { icon: "💰", label: t("paymentHistory"), value: "" },
-    { icon: "👤", label: t("account"), value: "" },
+    // { icon: "📜", label: t("expenseHistory"), value: "" },
+    // { icon: "💰", label: t("paymentHistory"), value: "" },
+    // { icon: "👤", label: t("account"), value: "" },
   ];
 
   return (
