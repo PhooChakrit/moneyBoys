@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "MoneyBoy - Expense Splitting",
+  title: "FriendPay - Expense Splitting",
   description: "Split expenses with friends easily",
 };
 

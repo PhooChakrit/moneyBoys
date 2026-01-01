@@ -1,6 +1,6 @@
 # Prisma Database Setup
 
-MoneyBoy uses Prisma ORM with PostgreSQL for database management.
+FriendPay uses Prisma ORM with PostgreSQL for database management.
 
 ## Database Schema
 

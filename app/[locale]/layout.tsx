@@ -9,7 +9,7 @@ import { routing } from "@/i18n/routing";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "MoneyBoy - Expense Splitting",
+    title: "FriendPay - Expense Splitting",
     description: "Split expenses with friends easily",
   };
 }
