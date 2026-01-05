@@ -262,3 +262,98 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     );
   }
 }
+
+// PATCH /api/groups/[id]/members - Update a member's role
+export async function PATCH(request: Request, { params }: RouteParams) {
+  try {
+    const user = await getCurrentUser();
+    const { id } = await params;
+
+    if (!user) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    // Check if user is admin of this group
+    const userMembership = await prisma.groupMember.findUnique({
+      where: {
+        userId_groupId: {
+          userId: user.id,
+          groupId: id,
+        },
+      },
+    });
+
+    if (!userMembership || userMembership.role !== "admin") {
+      return NextResponse.json(
+        { error: "Only admins can change member roles" },
+        { status: 403 },
+      );
+    }
+
+    const body = await request.json();
+    const { memberId, role } = body;
+
+    if (!memberId || !role) {
+      return NextResponse.json(
+        { error: "memberId and role are required" },
+        { status: 400 },
+      );
+    }
+
+    // Only allow setting to "staff" or "member" (not "admin")
+    if (role !== "staff" && role !== "member") {
+      return NextResponse.json(
+        { error: "Role must be 'staff' or 'member'" },
+        { status: 400 },
+      );
+    }
+
+    // Find the member to update
+    const memberToUpdate = await prisma.groupMember.findUnique({
+      where: {
+        userId_groupId: {
+          userId: memberId,
+          groupId: id,
+        },
+      },
+    });
+
+    if (!memberToUpdate) {
+      return NextResponse.json(
+        { error: "Member not found in this group" },
+        { status: 404 },
+      );
+    }
+
+    // Prevent changing admin role
+    if (memberToUpdate.role === "admin") {
+      return NextResponse.json(
+        { error: "Cannot change the admin's role" },
+        { status: 400 },
+      );
+    }
+
+    // Update the member's role
+    await prisma.groupMember.update({
+      where: {
+        userId_groupId: {
+          userId: memberId,
+          groupId: id,
+        },
+      },
+      data: { role },
+    });
+
+    return NextResponse.json({
+      message: "Member role updated successfully",
+      memberId,
+      role,
+    });
+  } catch (error) {
+    console.error("Update member role error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}

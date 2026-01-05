@@ -38,7 +38,8 @@
     "descriptionPlaceholder": "กลุ่มนี้เกี่ยวกับอะไร?",
     "optional": "ไม่บังคับ",
     "creating": "กำลังสร้าง...",
-    "create": "สร้าง"
+    "create": "สร้าง",
+    "allowMemberEdit": "อนุญาตให้สมาชิกทุกคนแก้ไขรายการ"
   },
   "groupDetail": {
     "transactions": "รายการ",
@@ -84,7 +85,12 @@
     "participants": "ผู้เข้าร่วม",
     "editExpense": "แก้ไขรายจ่าย",
     "deleteExpense": "ลบรายจ่าย",
-    "deleting": "กำลังลบ..."
+    "deleting": "กำลังลบ...",
+    "allowMemberEdit": "อนุญาตให้สมาชิกแก้ไข",
+    "allowMemberEditDesc": "ให้สมาชิกทุกคนเพิ่ม/แก้ไขรายการได้",
+    "staff": "สตาฟ",
+    "deleteGroup": "ลบกลุ่ม",
+    "deleteGroupConfirm": "คุณแน่ใจหรือว่าต้องการลบกลุ่มนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้ รายจ่ายและข้อมูลทั้งหมดจะถูกลบถาวร"
   },
   "settlement": {
     "title": "เคลียร์หนี้",
