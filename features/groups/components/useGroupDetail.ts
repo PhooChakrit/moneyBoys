@@ -1,0 +1,363 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+
+export interface MemberData {
+  id: string;
+  name: string;
+  email?: string;
+  avatar?: string;
+  role: string;
+  balance: number;
+  initials: string;
+  bankName?: string | null;
+  bankAccount?: string | null;
+  qrCodeUrl?: string | null;
+}
+
+export interface TransactionData {
+  id: string;
+  title: string;
+  amount: number;
+  currency: string;
+  paidBy: string;
+  paidById: string;
+  date: string;
+  participants: string[];
+}
+
+export interface DebtData {
+  from: string;
+  fromId: string;
+  fromBalance: number;
+  to: string;
+  toId: string;
+}
+
+export interface GroupData {
+  id: string;
+  name: string;
+  description?: string;
+  inviteCode: string;
+  memberCount: number;
+  expenseCount: number;
+  role: string;
+}
+
+export interface UseGroupDetailProps {
+  groupId: string;
+}
+
+export function useGroupDetail({ groupId }: UseGroupDetailProps) {
+  const params = useParams();
+  const router = useRouter();
+  const locale = params.locale as string;
+  const t = useTranslations("groupDetail");
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [group, setGroup] = useState<GroupData | null>(null);
+  const [members, setMembers] = useState<MemberData[]>([]);
+  const [transactions, setTransactions] = useState<TransactionData[]>([]);
+  const [debts, setDebts] = useState<DebtData[]>([]);
+
+  // Dialog state
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+
+  // Admin editing state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [savingGroup, setSavingGroup] = useState(false);
+  const [removingMember, setRemovingMember] = useState<string | null>(null);
+
+  // Transaction display
+  const [showAllTransactions, setShowAllTransactions] = useState(false);
+  const INITIAL_TRANSACTIONS_LIMIT = 3;
+
+  // Member payment modal
+  const [selectedMember, setSelectedMember] = useState<MemberData | null>(null);
+
+  // Transaction modal
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<TransactionData | null>(null);
+  const [deletingTransaction, setDeletingTransaction] = useState(false);
+
+  // Fetch group data
+  useEffect(() => {
+    const fetchGroup = async () => {
+      try {
+        const res = await fetch(`/api/groups/${groupId}`);
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Failed to fetch group");
+        }
+        const data = await res.json();
+        setGroup(data.group);
+        setMembers(data.members || []);
+        setTransactions(data.transactions || []);
+        setDebts(data.debts || []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load group");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGroup();
+  }, [groupId]);
+
+  // Copy invite link
+  const copyInviteLink = () => {
+    const link = `${window.location.origin}/${locale}/groups/join?code=${group?.inviteCode}`;
+    navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Start editing mode
+  const startEditing = () => {
+    if (group) {
+      setEditName(group.name);
+      setEditDescription(group.description || "");
+      setIsEditing(true);
+    }
+  };
+
+  // Save group changes
+  const saveGroupChanges = async () => {
+    if (!group) return;
+    setSavingGroup(true);
+    try {
+      const res = await fetch(`/api/groups/${groupId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editName.trim(),
+          description: editDescription.trim() || null,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setGroup({
+          ...group,
+          name: data.group.name,
+          description: data.group.description,
+        });
+        setIsEditing(false);
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to update group");
+      }
+    } catch {
+      alert("Failed to update group");
+    } finally {
+      setSavingGroup(false);
+    }
+  };
+
+  // Remove a member (admin only)
+  const removeMember = async (memberId: string) => {
+    if (!confirm("Are you sure you want to remove this member?")) return;
+    setRemovingMember(memberId);
+    try {
+      const res = await fetch(
+        `/api/groups/${groupId}/members?memberId=${memberId}`,
+        {
+          method: "DELETE",
+        },
+      );
+      if (res.ok) {
+        setMembers(members.filter((m) => m.id !== memberId));
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to remove member");
+      }
+    } catch {
+      alert("Failed to remove member");
+    } finally {
+      setRemovingMember(null);
+    }
+  };
+
+  // Delete transaction
+  const handleDeleteTransaction = async () => {
+    if (!selectedTransaction) return;
+    if (
+      !confirm(
+        "Are you sure you want to delete this expense? This cannot be undone.",
+      )
+    )
+      return;
+
+    setDeletingTransaction(true);
+    try {
+      const res = await fetch(`/api/expenses/${selectedTransaction.id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        // Remove from local state
+        setTransactions(
+          transactions.filter((t) => t.id !== selectedTransaction.id),
+        );
+        setSelectedTransaction(null);
+        // Refetch to update balances
+        const groupRes = await fetch(`/api/groups/${groupId}`);
+        if (groupRes.ok) {
+          const data = await groupRes.json();
+          setMembers(data.members || []);
+          setDebts(data.debts || []);
+        }
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to delete expense");
+      }
+    } catch {
+      alert("Failed to delete expense");
+    } finally {
+      setDeletingTransaction(false);
+    }
+  };
+
+  // Copy invite code
+  const copyInviteCode = () => {
+    if (group?.inviteCode) {
+      navigator.clipboard.writeText(group.inviteCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  // Leave group
+  const handleLeaveGroup = async () => {
+    setLeaving(true);
+    try {
+      const res = await fetch(`/api/groups/${groupId}/members?memberId=self`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        router.push(`/${locale}/groups`);
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to leave group");
+      }
+    } catch {
+      alert("Failed to leave group");
+    } finally {
+      setLeaving(false);
+      setShowLeaveConfirm(false);
+    }
+  };
+
+  // Bubble size based on balance magnitude - 5 size levels
+  const getBubbleSize = (balance: number, maxBalance: number) => {
+    const ratio = Math.abs(balance) / (maxBalance || 1);
+    if (ratio > 0.8) return { class: "w-32 h-32", px: 128 }; // XL
+    if (ratio > 0.6) return { class: "w-24 h-24", px: 96 }; // L
+    if (ratio > 0.4) return { class: "w-20 h-20", px: 80 }; // M
+    if (ratio > 0.2) return { class: "w-16 h-16", px: 64 }; // S
+    return { class: "w-12 h-12", px: 48 }; // XS
+  };
+
+  // Calculate dynamic positions based on bubble sizes - returns inline style
+  // Supports up to 12 members in a clustered arrangement
+  const getBubblePosition = (index: number) => {
+    // Position patterns - arranged in a cluster with overlapping
+    const patterns = [
+      { top: 50, left: 50 }, // 0: Center
+      { top: 35, left: 65 }, // 1: Top-right
+      { top: 65, left: 35 }, // 2: Bottom-left
+      { top: 30, left: 35 }, // 3: Top-left
+      { top: 70, left: 65 }, // 4: Bottom-right
+      { top: 20, left: 50 }, // 5: Top center
+      { top: 80, left: 50 }, // 6: Bottom center
+      { top: 45, left: 20 }, // 7: Left
+      { top: 45, left: 80 }, // 8: Right
+      { top: 25, left: 75 }, // 9: Top-right corner
+      { top: 75, left: 25 }, // 10: Bottom-left corner
+      { top: 55, left: 35 }, // 11: Center-left
+    ];
+
+    const pos = patterns[index] || patterns[index % patterns.length];
+    const zIndex = 12 - index;
+
+    return {
+      style: {
+        top: `${pos.top}%`,
+        left: `${pos.left}%`,
+        transform: "translate(-50%, -50%)",
+        zIndex,
+      },
+    };
+  };
+
+  const maxBalance = Math.max(...members.map((m) => Math.abs(m.balance)), 1);
+
+  return {
+    // Navigation
+    locale,
+    router,
+    t,
+    groupId,
+
+    // Data states
+    loading,
+    error,
+    group,
+    members,
+    transactions,
+    debts,
+    maxBalance,
+
+    // Dialog states
+    inviteDialogOpen,
+    setInviteDialogOpen,
+    settingsDialogOpen,
+    setSettingsDialogOpen,
+    copied,
+    leaving,
+    showLeaveConfirm,
+    setShowLeaveConfirm,
+
+    // Admin editing states
+    isEditing,
+    setIsEditing,
+    editName,
+    setEditName,
+    editDescription,
+    setEditDescription,
+    savingGroup,
+    removingMember,
+
+    // Transaction display
+    showAllTransactions,
+    setShowAllTransactions,
+    INITIAL_TRANSACTIONS_LIMIT,
+
+    // Member modal
+    selectedMember,
+    setSelectedMember,
+
+    // Transaction modal
+    selectedTransaction,
+    setSelectedTransaction,
+    deletingTransaction,
+
+    // Actions
+    copyInviteLink,
+    copyInviteCode,
+    startEditing,
+    saveGroupChanges,
+    removeMember,
+    handleDeleteTransaction,
+    handleLeaveGroup,
+    getBubbleSize,
+    getBubblePosition,
+  };
+}

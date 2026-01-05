@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,29 +32,28 @@ export function PaymentMethodScreen() {
   // qrPreview stores either a local blob URL (during upload) or signed URL (after load)
   const [qrPreview, setQrPreview] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchPaymentMethod();
-  }, []);
-
   // Fetch signed URL for an image key
-  const getSignedUrl = async (key: string): Promise<string | null> => {
-    try {
-      const response = await fetch("/api/image-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key }),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        return data.url;
+  const getSignedUrl = useCallback(
+    async (key: string): Promise<string | null> => {
+      try {
+        const response = await fetch("/api/image-url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key }),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          return data.url;
+        }
+      } catch (error) {
+        console.error("Failed to get signed URL:", error);
       }
-    } catch (error) {
-      console.error("Failed to get signed URL:", error);
-    }
-    return null;
-  };
+      return null;
+    },
+    [],
+  );
 
-  const fetchPaymentMethod = async () => {
+  const fetchPaymentMethod = useCallback(async () => {
     try {
       const response = await fetch("/api/payment-method");
       if (response.ok) {
@@ -79,7 +78,11 @@ export function PaymentMethodScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getSignedUrl]);
+
+  useEffect(() => {
+    fetchPaymentMethod();
+  }, [fetchPaymentMethod]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

@@ -132,7 +132,120 @@ export async function GET(request: Request, { params }: RouteParams) {
       };
     });
 
-    // Calculate debts (simplified: who owes whom)
+    // Calculate debts using direct debt tracking with pass-through optimization
+    // Step 1: Build a matrix of who owes whom directly from expenses
+    const debtMatrix: Map<string, Map<string, number>> = new Map();
+
+    // Initialize the matrix for all members
+    for (const member of group.members) {
+      debtMatrix.set(member.userId, new Map());
+    }
+
+    // Process each expense to build direct debts
+    for (const expense of group.expenses) {
+      const payerId = expense.paidById;
+
+      for (const split of expense.splits) {
+        if (!split.settled && split.userId !== payerId) {
+          // This person owes the payer
+          const currentDebt = debtMatrix.get(split.userId)?.get(payerId) || 0;
+          debtMatrix
+            .get(split.userId)
+            ?.set(payerId, currentDebt + split.amount);
+        }
+      }
+    }
+
+    // Process settlements - they reduce debts
+    for (const settlement of group.settlements) {
+      const fromId = settlement.fromUserId;
+      const toId = settlement.toUserId;
+
+      // Settlement reduces what 'from' owes to 'to'
+      const currentDebt = debtMatrix.get(fromId)?.get(toId) || 0;
+      const newDebt = currentDebt - settlement.amount;
+
+      if (newDebt > 0) {
+        debtMatrix.get(fromId)?.set(toId, newDebt);
+      } else if (newDebt < 0) {
+        // Overpaid - now 'to' owes 'from'
+        debtMatrix.get(fromId)?.set(toId, 0);
+        const reverseDebt = debtMatrix.get(toId)?.get(fromId) || 0;
+        debtMatrix.get(toId)?.set(fromId, reverseDebt + Math.abs(newDebt));
+      } else {
+        debtMatrix.get(fromId)?.set(toId, 0);
+      }
+    }
+
+    // Step 2: Simplify by netting mutual debts (if A owes B and B owes A, net them)
+    for (const [debtorId, creditors] of debtMatrix) {
+      for (const [creditorId, amount] of creditors) {
+        if (amount > 0) {
+          const reverseAmount = debtMatrix.get(creditorId)?.get(debtorId) || 0;
+          if (reverseAmount > 0) {
+            // Net the debts
+            if (amount > reverseAmount) {
+              debtMatrix.get(debtorId)?.set(creditorId, amount - reverseAmount);
+              debtMatrix.get(creditorId)?.set(debtorId, 0);
+            } else {
+              debtMatrix.get(debtorId)?.set(creditorId, 0);
+              debtMatrix.get(creditorId)?.set(debtorId, reverseAmount - amount);
+            }
+          }
+        }
+      }
+    }
+
+    // Step 3: Pass-through optimization
+    // If A owes B, and B owes C, route some of A's debt directly to C
+    let optimized = true;
+    const maxIterations = 10; // Prevent infinite loops
+    let iterations = 0;
+
+    while (optimized && iterations < maxIterations) {
+      optimized = false;
+      iterations++;
+
+      for (const [debtorId, creditors] of debtMatrix) {
+        for (const [creditorId, amount] of creditors) {
+          if (amount <= 0.01) continue;
+
+          // Check if creditor owes someone else
+          const creditorDebts = debtMatrix.get(creditorId);
+          if (!creditorDebts) continue;
+
+          for (const [finalCreditorId, creditorDebtAmount] of creditorDebts) {
+            if (creditorDebtAmount <= 0.01) continue;
+            if (finalCreditorId === debtorId) continue; // Skip circular
+
+            // Pass through: A pays C directly instead of A → B → C
+            const passAmount = Math.min(amount, creditorDebtAmount);
+
+            if (passAmount > 0.01) {
+              // Reduce A → B
+              debtMatrix.get(debtorId)?.set(creditorId, amount - passAmount);
+              // Reduce B → C
+              debtMatrix
+                .get(creditorId)
+                ?.set(finalCreditorId, creditorDebtAmount - passAmount);
+              // Increase A → C
+              const currentAtoC =
+                debtMatrix.get(debtorId)?.get(finalCreditorId) || 0;
+              debtMatrix
+                .get(debtorId)
+                ?.set(finalCreditorId, currentAtoC + passAmount);
+
+              optimized = true;
+              break;
+            }
+          }
+          if (optimized) break;
+        }
+        if (optimized) break;
+      }
+    }
+
+    // Step 4: Build final debts array
     const debts: Array<{
       from: string;
       fromId: string;
@@ -141,39 +254,28 @@ export async function GET(request: Request, { params }: RouteParams) {
       toId: string;
     }> = [];
 
-    const sortedMembers = [...memberDetails].sort(
-      (a, b) => a.balance - b.balance,
-    );
+    // Create name lookup
+    const nameById = new Map<string, string>();
+    for (const member of group.members) {
+      nameById.set(member.userId, member.user.name);
+    }
 
-    // Simple debt calculation: pair up people with negative and positive balances
-    let debtorIdx = 0;
-    let creditorIdx = sortedMembers.length - 1;
-
-    while (debtorIdx < creditorIdx) {
-      const debtor = sortedMembers[debtorIdx];
-      const creditor = sortedMembers[creditorIdx];
-
-      if (debtor.balance >= 0) break;
-      if (creditor.balance <= 0) break;
-
-      const amount = Math.min(Math.abs(debtor.balance), creditor.balance);
-
-      if (amount > 0) {
-        debts.push({
-          from: debtor.name,
-          fromId: debtor.id,
-          fromBalance: amount,
-          to: creditor.name,
-          toId: creditor.id,
-        });
-      }
-
-      if (Math.abs(debtor.balance) <= creditor.balance) {
-        debtorIdx++;
-      } else {
-        creditorIdx--;
+    for (const [debtorId, creditors] of debtMatrix) {
+      for (const [creditorId, amount] of creditors) {
+        if (amount > 0.01) {
+          debts.push({
+            from: nameById.get(debtorId) || "Unknown",
+            fromId: debtorId,
+            fromBalance: Math.round(amount * 100) / 100,
+            to: nameById.get(creditorId) || "Unknown",
+            toId: creditorId,
+          });
+        }
       }
     }
+
+    // Sort debts by amount (highest first)
+    debts.sort((a, b) => b.fromBalance - a.fromBalance);
 
     // Format transactions
     const transactions = group.expenses.map((expense) => ({
