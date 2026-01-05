@@ -40,6 +40,7 @@ export interface GroupData {
   id: string;
   name: string;
   description?: string;
+  allowMemberEdit: boolean;
   inviteCode: string;
   memberCount: number;
   expenseCount: number;
@@ -69,6 +70,8 @@ export function useGroupDetail({ groupId }: UseGroupDetailProps) {
   const [copied, setCopied] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingGroup, setDeletingGroup] = useState(false);
 
   // Admin editing state
   const [isEditing, setIsEditing] = useState(false);
@@ -255,6 +258,68 @@ export function useGroupDetail({ groupId }: UseGroupDetailProps) {
     }
   };
 
+  // Delete group (admin only)
+  const handleDeleteGroup = async () => {
+    setDeletingGroup(true);
+    try {
+      const res = await fetch(`/api/groups/${groupId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        router.push(`/${locale}/groups`);
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to delete group");
+      }
+    } catch {
+      alert("Failed to delete group");
+    } finally {
+      setDeletingGroup(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  // Toggle allow member edit
+  const toggleAllowMemberEdit = async (allow: boolean) => {
+    if (!group) return;
+    try {
+      const res = await fetch(`/api/groups/${groupId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ allowMemberEdit: allow }),
+      });
+      if (res.ok) {
+        setGroup({ ...group, allowMemberEdit: allow });
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to update setting");
+      }
+    } catch {
+      alert("Failed to update setting");
+    }
+  };
+
+  // Update member role
+  const updateMemberRole = async (memberId: string, role: string) => {
+    try {
+      const res = await fetch(`/api/groups/${groupId}/members`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId, role }),
+      });
+      if (res.ok) {
+        setMembers(
+          members.map((m) => (m.id === memberId ? { ...m, role } : m)),
+        );
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to update role");
+      }
+    } catch {
+      alert("Failed to update role");
+    }
+  };
+
   // Bubble size based on balance magnitude - 5 size levels
   const getBubbleSize = (balance: number, maxBalance: number) => {
     const ratio = Math.abs(balance) / (maxBalance || 1);
@@ -324,6 +389,9 @@ export function useGroupDetail({ groupId }: UseGroupDetailProps) {
     leaving,
     showLeaveConfirm,
     setShowLeaveConfirm,
+    showDeleteConfirm,
+    setShowDeleteConfirm,
+    deletingGroup,
 
     // Admin editing states
     isEditing,
@@ -357,6 +425,9 @@ export function useGroupDetail({ groupId }: UseGroupDetailProps) {
     removeMember,
     handleDeleteTransaction,
     handleLeaveGroup,
+    handleDeleteGroup,
+    toggleAllowMemberEdit,
+    updateMemberRole,
     getBubbleSize,
     getBubblePosition,
   };

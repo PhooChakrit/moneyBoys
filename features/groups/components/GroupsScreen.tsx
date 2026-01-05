@@ -45,6 +45,7 @@ export function GroupsScreen() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupDescription, setNewGroupDescription] = useState("");
+  const [allowMemberEdit, setAllowMemberEdit] = useState(false);
   const [creating, setCreating] = useState(false);
 
   // Join group dialog state
@@ -82,6 +83,7 @@ export function GroupsScreen() {
         body: JSON.stringify({
           name: newGroupName.trim(),
           description: newGroupDescription.trim() || undefined,
+          allowMemberEdit,
         }),
       });
 
@@ -95,6 +97,7 @@ export function GroupsScreen() {
       setCreateDialogOpen(false);
       setNewGroupName("");
       setNewGroupDescription("");
+      setAllowMemberEdit(false);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to create group");
     } finally {
@@ -296,6 +299,22 @@ export function GroupsScreen() {
                 onChange={(e) => setNewGroupDescription(e.target.value)}
                 className="mt-1 dark:bg-gray-700 dark:text-white"
               />
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="allowMemberEdit"
+                checked={allowMemberEdit}
+                onChange={(e) => setAllowMemberEdit(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-emerald-500 focus:ring-emerald-500"
+              />
+              <label
+                htmlFor="allowMemberEdit"
+                className="text-sm text-gray-700 dark:text-gray-300"
+              >
+                {t("allowMemberEdit") ||
+                  "Allow all members to edit transactions"}
+              </label>
             </div>
             <Button
               onClick={handleCreateGroup}

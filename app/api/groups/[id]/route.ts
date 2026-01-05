@@ -297,6 +297,7 @@ export async function GET(request: Request, { params }: RouteParams) {
         id: group.id,
         name: group.name,
         description: group.description,
+        allowMemberEdit: group.allowMemberEdit,
         inviteCode: group.inviteCode,
         memberCount: group._count.members,
         expenseCount: group._count.expenses,
@@ -326,7 +327,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    // Check if user is admin of this group
+    // Check if user is admin or staff of this group
     const membership = await prisma.groupMember.findUnique({
       where: {
         userId_groupId: {
@@ -336,17 +337,24 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       },
     });
 
-    if (!membership || membership.role !== "admin") {
+    if (
+      !membership ||
+      (membership.role !== "admin" && membership.role !== "staff")
+    ) {
       return NextResponse.json(
-        { error: "Only admins can update the group" },
+        { error: "Only admins or staff can update the group" },
         { status: 403 },
       );
     }
 
     const body = await request.json();
-    const { name, description } = body;
+    const { name, description, allowMemberEdit } = body;
 
-    const updateData: { name?: string; description?: string | null } = {};
+    const updateData: {
+      name?: string;
+      description?: string | null;
+      allowMemberEdit?: boolean;
+    } = {};
 
     if (name !== undefined) {
       if (name.trim().length === 0) {
@@ -360,6 +368,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     if (description !== undefined) {
       updateData.description = description?.trim() || null;
+    }
+
+    if (allowMemberEdit !== undefined) {
+      updateData.allowMemberEdit = allowMemberEdit;
     }
 
     const updatedGroup = await prisma.group.update({

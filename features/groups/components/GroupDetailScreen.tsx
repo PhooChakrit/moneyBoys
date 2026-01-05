@@ -11,6 +11,7 @@ import { SettingsDialog } from "./SettingsDialog";
 import { DebtsSection } from "./DebtsSection";
 import { TransactionsSection } from "./TransactionsSection";
 import { LeaveGroupDialog } from "./LeaveGroupDialog";
+import { DeleteGroupDialog } from "./DeleteGroupDialog";
 import { MemberPaymentModal } from "./MemberPaymentModal";
 import { TransactionDetailModal } from "./TransactionDetailModal";
 
@@ -42,6 +43,9 @@ export function GroupDetailScreen({ groupId }: GroupDetailScreenProps) {
     leaving,
     showLeaveConfirm,
     setShowLeaveConfirm,
+    showDeleteConfirm,
+    setShowDeleteConfirm,
+    deletingGroup,
 
     // Admin editing states
     isEditing,
@@ -75,6 +79,9 @@ export function GroupDetailScreen({ groupId }: GroupDetailScreenProps) {
     removeMember,
     handleDeleteTransaction,
     handleLeaveGroup,
+    handleDeleteGroup,
+    toggleAllowMemberEdit,
+    updateMemberRole,
     getBubbleSize,
     getBubblePosition,
   } = useGroupDetail({ groupId });
@@ -141,6 +148,12 @@ export function GroupDetailScreen({ groupId }: GroupDetailScreenProps) {
                 setSettingsDialogOpen(false);
                 setShowLeaveConfirm(true);
               }}
+              onDeleteGroup={() => {
+                setSettingsDialogOpen(false);
+                setShowDeleteConfirm(true);
+              }}
+              onToggleAllowMemberEdit={toggleAllowMemberEdit}
+              onUpdateMemberRole={updateMemberRole}
               t={t}
             />
           </div>
@@ -206,6 +219,15 @@ export function GroupDetailScreen({ groupId }: GroupDetailScreenProps) {
         groupName={group.name}
         leaving={leaving}
         onLeave={handleLeaveGroup}
+        t={t}
+      />
+
+      {/* Delete Group Confirmation Dialog */}
+      <DeleteGroupDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        deleting={deletingGroup}
+        onDelete={handleDeleteGroup}
         t={t}
       />
 
