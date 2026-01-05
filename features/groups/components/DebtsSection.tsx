@@ -59,19 +59,19 @@ export function DebtsSection({
           const fromMember = members.find((m) => m.id === debt.fromId);
           const toMember = members.find((m) => m.id === debt.toId);
           return (
-            <div key={i} className="flex items-center justify-between py-3">
+            <div key={i} className="flex items-center py-3">
               {/* From person - clickable */}
               <button
                 onClick={() => fromMember && onMemberClick(fromMember)}
-                className="flex items-center gap-3 hover:opacity-80 transition-opacity text-left"
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity text-left flex-1 min-w-0"
               >
-                <Avatar className="w-12 h-12">
+                <Avatar className="w-12 h-12 shrink-0">
                   <AvatarFallback className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">
                     {debt.from[0]}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <p className="font-semibold text-gray-800 dark:text-white">
+                <div className="min-w-0">
+                  <p className="font-semibold text-gray-800 dark:text-white truncate">
                     {debt.from}
                   </p>
                   <p className="text-amber-600 dark:text-amber-400 font-bold">
@@ -79,20 +79,21 @@ export function DebtsSection({
                   </p>
                 </div>
               </button>
-              <div className="flex items-center">
-                <ArrowRightIcon className="w-5 h-5 text-gray-400 mx-4" />
+              {/* Arrow - fixed center */}
+              <div className="shrink-0 px-3">
+                <ArrowRightIcon className="w-5 h-5 text-gray-400" />
               </div>
               {/* To person - clickable */}
               <button
                 onClick={() => toMember && onMemberClick(toMember)}
-                className="flex items-center gap-3 hover:opacity-80 transition-opacity text-right"
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-1 min-w-0 justify-end"
               >
-                <div className="text-right">
-                  <p className="font-semibold text-gray-800 dark:text-white">
+                <div className="text-right min-w-0">
+                  <p className="font-semibold text-gray-800 dark:text-white truncate">
                     {debt.to}
                   </p>
                 </div>
-                <Avatar className="w-12 h-12">
+                <Avatar className="w-12 h-12 shrink-0">
                   <AvatarFallback className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
                     {debt.to[0]}
                   </AvatarFallback>
