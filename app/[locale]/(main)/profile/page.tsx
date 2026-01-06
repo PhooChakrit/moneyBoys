@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,25 @@ export default function ProfilePage() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [isOAuthUser, setIsOAuthUser] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Check if user is OAuth (Google) user
+  useEffect(() => {
+    const checkOAuth = async () => {
+      try {
+        const res = await fetch("/api/auth/profile");
+        if (res.ok) {
+          const data = await res.json();
+          // OAuth users don't have a password field set
+          setIsOAuthUser(!data.user?.password);
+        }
+      } catch {
+        // Ignore errors
+      }
+    };
+    checkOAuth();
+  }, []);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -214,22 +232,31 @@ export default function ProfilePage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="h-12 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                    disabled={isOAuthUser}
+                    className={`h-12 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 ${isOAuthUser ? "opacity-60 cursor-not-allowed" : ""}`}
                   />
+                  {isOAuthUser && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {t("oauthEmailDisabled") ||
+                        "Email cannot be changed for Google login accounts"}
+                    </p>
+                  )}
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {t("newPassword")}
-                  </label>
-                  <Input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Leave blank to keep current"
-                    className="h-12 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600"
-                  />
-                </div>
+                {!isOAuthUser && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {t("newPassword")}
+                    </label>
+                    <Input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Leave blank to keep current"
+                      className="h-12 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                    />
+                  </div>
+                )}
               </div>
 
               <Button

@@ -189,7 +189,8 @@
     "saving": "Saving...",
     "updateSuccess": "Profile updated successfully",
     "currentPassword": "Current Password",
-    "newPassword": "New Password"
+    "newPassword": "New Password",
+    "oauthEmailDisabled": "Email cannot be changed for Google login accounts"
   },
   "paymentMethod": {
     "title": "Payment Method",

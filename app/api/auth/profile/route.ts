@@ -28,6 +28,13 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
+    // Check if user is OAuth user (no password = Google login)
+    const fullUser = await prisma.user.findUnique({
+      where: { id: currentUser.id },
+      select: { password: true },
+    });
+    const isOAuthUser = !fullUser?.password;
+
     const body = await request.json();
     const { name, email, avatar, password } = body;
 
@@ -43,7 +50,15 @@ export async function PATCH(request: Request) {
       updateData.name = name;
     }
 
+    // Block email changes for OAuth users
     if (email !== undefined) {
+      if (isOAuthUser) {
+        return NextResponse.json(
+          { error: "OAuth users cannot change their email" },
+          { status: 403 },
+        );
+      }
+
       // Check if email is already taken by another user
       const existingUser = await prisma.user.findFirst({
         where: {
@@ -66,7 +81,15 @@ export async function PATCH(request: Request) {
       updateData.avatar = avatar;
     }
 
+    // Block password changes for OAuth users
     if (password !== undefined) {
+      if (isOAuthUser) {
+        return NextResponse.json(
+          { error: "OAuth users cannot set a password" },
+          { status: 403 },
+        );
+      }
+
       if (password.length < 6) {
         return NextResponse.json(
           { error: "Password must be at least 6 characters" },
