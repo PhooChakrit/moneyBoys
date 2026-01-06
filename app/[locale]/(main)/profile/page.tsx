@@ -21,6 +21,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [isOAuthUser, setIsOAuthUser] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Check if user is OAuth (Google) user
@@ -40,6 +41,33 @@ export default function ProfilePage() {
     checkOAuth();
   }, []);
 
+  // Fetch signed URL for avatar
+  useEffect(() => {
+    const fetchAvatarUrl = async () => {
+      if (user?.avatar) {
+        // Check if avatar is already a full URL (legacy) or a key
+        if (user.avatar.startsWith("http")) {
+          setAvatarUrl(user.avatar);
+        } else {
+          try {
+            const res = await fetch("/api/image-url", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ key: user.avatar }),
+            });
+            if (res.ok) {
+              const data = await res.json();
+              setAvatarUrl(data.url);
+            }
+          } catch {
+            // Ignore errors
+          }
+        }
+      }
+    };
+    fetchAvatarUrl();
+  }, [user?.avatar]);
+
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -49,12 +77,13 @@ export default function ProfilePage() {
 
     try {
       // Get presigned URL for upload
-      const urlRes = await fetch("/api/upload", {
+      const urlRes = await fetch("/api/upload/presign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           filename: file.name,
           contentType: file.type,
+          folder: "avatars",
         }),
       });
 
@@ -62,7 +91,7 @@ export default function ProfilePage() {
         throw new Error("Failed to get upload URL");
       }
 
-      const { uploadUrl, publicUrl } = await urlRes.json();
+      const { uploadUrl, key } = await urlRes.json();
 
       // Upload to R2
       await fetch(uploadUrl, {
@@ -71,11 +100,11 @@ export default function ProfilePage() {
         body: file,
       });
 
-      // Update profile with new avatar URL
+      // Update profile with new avatar key
       const profileRes = await fetch("/api/auth/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ avatar: publicUrl }),
+        body: JSON.stringify({ avatar: key }),
       });
 
       if (!profileRes.ok) {
@@ -175,7 +204,7 @@ export default function ProfilePage() {
               {/* Avatar Section */}
               <div className="flex flex-col items-center space-y-4">
                 <Avatar className="w-24 h-24 border-4 border-emerald-100 dark:border-emerald-900 shadow-lg">
-                  <AvatarImage src={user.avatar || undefined} alt={user.name} />
+                  <AvatarImage src={avatarUrl || undefined} alt={user.name} />
                   <AvatarFallback className="bg-gradient-to-br from-emerald-400 to-teal-500 text-white text-2xl font-bold">
                     {getInitials(user.name)}
                   </AvatarFallback>
