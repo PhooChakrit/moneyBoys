@@ -1,53 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
-import { useParams, useRouter, usePathname } from "next/navigation";
-import { useTheme } from "next-themes";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarDisplay } from "@/components/ui/avatar-display";
 import { Separator } from "@/components/ui/separator";
 import { ChevronRightIcon } from "@/components/icons";
-import { useAuth } from "@/features/auth/context/AuthContext";
+import { useSettings } from "./useSettings";
 
 export function SettingsScreen() {
-  const t = useTranslations("settings");
-  const params = useParams();
-  const router = useRouter();
-  const pathname = usePathname();
-  const locale = params.locale as string;
-  const { theme, setTheme } = useTheme();
-  const { user, logout } = useAuth();
-  const [mounted, setMounted] = useState(false);
-
-  // Prevent hydration mismatch by only rendering theme-dependent UI after mount
-  useEffect(() => {
-    requestAnimationFrame(() => setMounted(true));
-  }, []);
-
-  const handleLogout = async () => {
-    await logout();
-    router.push(`/${locale}/login`);
-  };
-
-  const switchLocale = (newLocale: string) => {
-    const newPathname = pathname.replace(`/${locale}`, `/${newLocale}`);
-    router.push(newPathname);
-  };
-
-  const settingsItems = [
-    // { icon: "🔗", label: t("inviteFriends"), value: "" },
-    // { icon: "🔒", label: t("groupPermissions"), value: "" },
-    {
-      icon: "💳",
-      label: t("paymentMethod"),
-      value: "",
-      href: `/${locale}/payment-method`,
-    },
-    // { icon: "📜", label: t("expenseHistory"), value: "" },
-    // { icon: "💰", label: t("paymentHistory"), value: "" },
-    // { icon: "👤", label: t("account"), value: "" },
-  ];
+  const {
+    t,
+    locale,
+    user,
+    theme,
+    setTheme,
+    mounted,
+    handleLogout,
+    switchLocale,
+    navigateToItem,
+    settingsItems,
+  } = useSettings();
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] dark:bg-gray-900 pb-24 lg:pb-8">
@@ -62,11 +33,11 @@ export function SettingsScreen() {
         <Card className="border-0 shadow-sm dark:bg-gray-800 dark:text-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-4">
-              <Avatar className="w-16 h-16">
-                <AvatarFallback className="text-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
-                  {user?.name?.charAt(0)?.toUpperCase() || "?"}
-                </AvatarFallback>
-              </Avatar>
+              <AvatarDisplay
+                avatarKey={user?.avatar}
+                name={user?.name || "Guest"}
+                size="lg"
+              />
               <div>
                 <p className="font-bold text-gray-800 dark:text-white text-lg">
                   {user?.name || "Guest"}
@@ -163,7 +134,7 @@ export function SettingsScreen() {
             {settingsItems.map((item, i) => (
               <div key={i}>
                 <div
-                  onClick={() => item.href && router.push(item.href)}
+                  onClick={() => navigateToItem(item.href)}
                   className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   <div className="flex items-center gap-3">

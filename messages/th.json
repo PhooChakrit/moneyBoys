@@ -189,7 +189,8 @@
     "saving": "กำลังบันทึก...",
     "updateSuccess": "อัปเดตโปรไฟล์สำเร็จ",
     "currentPassword": "รหัสผ่านปัจจุบัน",
-    "newPassword": "รหัสผ่านใหม่"
+    "newPassword": "รหัสผ่านใหม่",
+    "oauthEmailDisabled": "ไม่สามารถเปลี่ยนอีเมลสำหรับบัญชีที่ล็อกอินด้วย Google"
   },
   "paymentMethod": {
     "title": "วิธีรับเงิน",

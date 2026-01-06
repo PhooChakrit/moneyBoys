@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
+import { AvatarDisplay } from "@/components/ui/avatar-display";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   BellIcon,
@@ -93,11 +94,12 @@ export function HomeScreen() {
             <button className="p-2 rounded-full bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow">
               <BellIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
             </button>
-            <Avatar className="w-10 h-10 border-2 border-emerald-500">
-              <AvatarFallback className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
-                {user?.name?.charAt(0)?.toUpperCase() || "?"}
-              </AvatarFallback>
-            </Avatar>
+            <AvatarDisplay
+              avatarKey={user?.avatar}
+              name={user?.name || "Guest"}
+              size="md"
+              className="border-2 border-emerald-500"
+            />
           </div>
         </div>
 

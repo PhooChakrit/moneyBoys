@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarDisplay } from "@/components/ui/avatar-display";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -151,11 +152,12 @@ export function GroupsScreen() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {t("title")}
           </h1>
-          <Avatar className="w-10 h-10">
-            <AvatarFallback className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
-              {user?.name?.charAt(0)?.toUpperCase() || "?"}
-            </AvatarFallback>
-          </Avatar>
+          <AvatarDisplay
+            avatarKey={user?.avatar}
+            name={user?.name || "Guest"}
+            size="md"
+            isCurrentUser
+          />
         </div>
       </div>
 

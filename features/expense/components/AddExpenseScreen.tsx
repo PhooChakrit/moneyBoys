@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeftIcon } from "@/components/icons";
+import { AvatarDisplay } from "@/components/ui/avatar-display";
 import { useAuth } from "@/features/auth/context/AuthContext";
 
 interface GroupMember {
@@ -516,13 +517,17 @@ export function AddExpenseScreen() {
                   key={member.id}
                   type="button"
                   onClick={() => setPaidById(member.userId)}
-                  className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
+                  className={`rounded-full transition-all ${
                     paidById === member.userId
-                      ? "bg-emerald-500 text-white ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-gray-900"
-                      : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                      ? "ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-gray-900"
+                      : ""
                   }`}
                 >
-                  {member.user.name.charAt(0).toUpperCase()}
+                  <AvatarDisplay
+                    avatarKey={member.user.avatar}
+                    name={member.user.name}
+                    size="md"
+                  />
                 </button>
               ))}
             </div>
@@ -596,9 +601,11 @@ export function AddExpenseScreen() {
                 <div className="space-y-3">
                   {members.map((member) => (
                     <div key={member.id} className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {member.user.name.charAt(0).toUpperCase()}
-                      </div>
+                      <AvatarDisplay
+                        avatarKey={member.user.avatar}
+                        name={member.user.name}
+                        size="sm"
+                      />
                       <span className="flex-1 text-gray-700 dark:text-gray-300 text-sm">
                         {member.user.name}
                       </span>

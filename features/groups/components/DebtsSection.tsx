@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarDisplay } from "@/components/ui/avatar-display";
 import { Separator } from "@/components/ui/separator";
 import { PlusIcon, ArrowRightIcon } from "@/components/icons";
 import { MemberData, DebtData } from "./useGroupDetail";
@@ -65,11 +65,11 @@ export function DebtsSection({
                 onClick={() => fromMember && onMemberClick(fromMember)}
                 className="flex items-center gap-2 hover:opacity-80 transition-opacity text-left flex-1 min-w-0"
               >
-                <Avatar className="w-12 h-12 shrink-0">
-                  <AvatarFallback className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">
-                    {debt.from[0]}
-                  </AvatarFallback>
-                </Avatar>
+                <AvatarDisplay
+                  avatarKey={fromMember?.avatar}
+                  name={debt.from}
+                  size="md"
+                />
                 <div className="min-w-0">
                   <p className="font-semibold text-gray-800 dark:text-white truncate">
                     {debt.from}
@@ -93,11 +93,11 @@ export function DebtsSection({
                     {debt.to}
                   </p>
                 </div>
-                <Avatar className="w-12 h-12 shrink-0">
-                  <AvatarFallback className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
-                    {debt.to[0]}
-                  </AvatarFallback>
-                </Avatar>
+                <AvatarDisplay
+                  avatarKey={toMember?.avatar}
+                  name={debt.to}
+                  size="md"
+                />
               </button>
             </div>
           );
