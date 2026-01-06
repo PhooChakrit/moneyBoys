@@ -1,190 +1,55 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useTranslations } from "next-intl";
-import { useRouter, useParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ArrowLeftIcon } from "@/components/icons";
+import { usePaymentMethod } from "./usePaymentMethod";
 
-interface PaymentMethod {
-  bankName: string | null;
-  bankAccount: string | null;
-  qrCodeUrl: string | null; // This stores the object KEY, not full URL
-}
+// Thai banks list with PromptPay first
+const THAI_BANKS = [
+  { value: "promptpay", label: "PromptPay" },
+  { value: "kbank", label: "กสิกรไทย (KBank)" },
+  { value: "scb", label: "ไทยพาณิชย์ (SCB)" },
+  { value: "bbl", label: "กรุงเทพ (BBL)" },
+  { value: "ktb", label: "กรุงไทย (KTB)" },
+  { value: "bay", label: "กรุงศรี (BAY)" },
+  { value: "tmb", label: "ทหารไทยธนชาต (TTB)" },
+  { value: "gsb", label: "ออมสิน (GSB)" },
+  { value: "ghb", label: "อาคารสงเคราะห์ (GHB)" },
+  { value: "cimb", label: "ซีไอเอ็มบี (CIMB)" },
+  { value: "uob", label: "ยูโอบี (UOB)" },
+  { value: "lhbank", label: "แลนด์ แอนด์ เฮ้าส์ (LH Bank)" },
+  { value: "tisco", label: "ทิสโก้ (TISCO)" },
+  { value: "kkp", label: "เกียรตินาคินภัทร (KKP)" },
+  { value: "icbc", label: "ไอซีบีซี (ICBC)" },
+];
 
 export function PaymentMethodScreen() {
-  const t = useTranslations("paymentMethod");
-  const router = useRouter();
-  const params = useParams();
-  const locale = params.locale as string;
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [bankName, setBankName] = useState("");
-  const [bankAccount, setBankAccount] = useState("");
-  // qrCodeKey stores the R2 object key (e.g., "qrcodes/userId/file.png")
-  const [qrCodeKey, setQrCodeKey] = useState<string | null>(null);
-  // qrPreview stores either a local blob URL (during upload) or signed URL (after load)
-  const [qrPreview, setQrPreview] = useState<string | null>(null);
-
-  // Fetch signed URL for an image key
-  const getSignedUrl = useCallback(
-    async (key: string): Promise<string | null> => {
-      try {
-        const response = await fetch("/api/image-url", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key }),
-        });
-        if (response.ok) {
-          const data = await response.json();
-          return data.url;
-        }
-      } catch (error) {
-        console.error("Failed to get signed URL:", error);
-      }
-      return null;
-    },
-    [],
-  );
-
-  const fetchPaymentMethod = useCallback(async () => {
-    try {
-      const response = await fetch("/api/payment-method");
-      if (response.ok) {
-        const data = await response.json();
-        const pm: PaymentMethod = data.paymentMethod;
-        if (pm) {
-          setBankName(pm.bankName || "");
-          setBankAccount(pm.bankAccount || "");
-
-          // If there's a saved QR code key, get a signed URL to display it
-          if (pm.qrCodeUrl) {
-            setQrCodeKey(pm.qrCodeUrl);
-            const signedUrl = await getSignedUrl(pm.qrCodeUrl);
-            if (signedUrl) {
-              setQrPreview(signedUrl);
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Failed to fetch payment method:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [getSignedUrl]);
-
-  useEffect(() => {
-    fetchPaymentMethod();
-  }, [fetchPaymentMethod]);
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Show local preview immediately
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setQrPreview(event.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-
-    // Upload to R2 using presigned URL
-    setUploading(true);
-    try {
-      // Get presigned URL for upload
-      const presignResponse = await fetch("/api/upload/presign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type,
-          folder: "qrcodes",
-        }),
-      });
-
-      if (!presignResponse.ok) {
-        if (presignResponse.status === 401) {
-          alert("Please log in to upload images");
-          router.push(`/${locale}/login`);
-          return;
-        }
-        throw new Error("Failed to get upload URL");
-      }
-
-      const { uploadUrl, key } = await presignResponse.json();
-
-      // Upload directly to R2
-      const uploadResponse = await fetch(uploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: {
-          "Content-Type": file.type,
-        },
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error("Failed to upload file");
-      }
-
-      // Store the key (not the full URL)
-      setQrCodeKey(key);
-
-      // Get signed URL for display
-      const signedUrl = await getSignedUrl(key);
-      if (signedUrl) {
-        setQrPreview(signedUrl);
-      }
-    } catch (error) {
-      console.error("Upload failed:", error);
-      // Revert to previous state on error
-      if (qrCodeKey) {
-        const signedUrl = await getSignedUrl(qrCodeKey);
-        setQrPreview(signedUrl);
-      } else {
-        setQrPreview(null);
-      }
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleRemoveQr = () => {
-    setQrCodeKey(null);
-    setQrPreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const response = await fetch("/api/payment-method", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          bankName: bankName || null,
-          bankAccount: bankAccount || null,
-          qrCodeUrl: qrCodeKey || null, // Save the key, not URL
-        }),
-      });
-
-      if (response.ok) {
-        router.push(`/${locale}/settings`);
-      }
-    } catch (error) {
-      console.error("Failed to save:", error);
-    } finally {
-      setSaving(false);
-    }
-  };
+  const {
+    t,
+    router,
+    fileInputRef,
+    loading,
+    saving,
+    uploading,
+    bankName,
+    setBankName,
+    bankAccount,
+    setBankAccount,
+    qrPreview,
+    handleFileChange,
+    handleRemoveQr,
+    handleSave,
+  } = usePaymentMethod();
 
   if (loading) {
     return (
@@ -220,13 +85,22 @@ export function PaymentMethodScreen() {
             >
               {t("bankName")}
             </Label>
-            <Input
-              id="bankName"
-              value={bankName}
-              onChange={(e) => setBankName(e.target.value)}
-              placeholder={t("bankNamePlaceholder")}
-              className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
+            <Select value={bankName} onValueChange={setBankName}>
+              <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white w-full">
+                <SelectValue placeholder={t("bankNamePlaceholder")} />
+              </SelectTrigger>
+              <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                {THAI_BANKS.map((bank) => (
+                  <SelectItem
+                    key={bank.value}
+                    value={bank.value}
+                    className="dark:text-white dark:focus:bg-gray-700"
+                  >
+                    {bank.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </CardContent>
         </Card>
 
