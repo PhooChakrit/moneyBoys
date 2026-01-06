@@ -98,8 +98,11 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     const isPayer = expense.paidById === user.id;
     const isAdmin = membership.role === "admin";
+    const isStaff = membership.role === "staff";
+    const canMemberEdit = expense.group.allowMemberEdit;
 
-    if (!isPayer && !isAdmin) {
+    // Allow edit if: payer, admin, staff, or (member AND allowMemberEdit is true)
+    if (!isPayer && !isAdmin && !isStaff && !canMemberEdit) {
       return NextResponse.json(
         { error: "Only the payer or admin can edit this expense" },
         { status: 403 },
@@ -186,6 +189,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     const expense = await prisma.expense.findUnique({
       where: { id },
+      include: { group: true },
     });
 
     if (!expense) {
@@ -211,8 +215,11 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     const isPayer = expense.paidById === user.id;
     const isAdmin = membership.role === "admin";
+    const isStaff = membership.role === "staff";
+    const canMemberEdit = expense.group.allowMemberEdit;
 
-    if (!isPayer && !isAdmin) {
+    // Allow delete if: payer, admin, staff, or (member AND allowMemberEdit is true)
+    if (!isPayer && !isAdmin && !isStaff && !canMemberEdit) {
       return NextResponse.json(
         { error: "Only the payer or admin can delete this expense" },
         { status: 403 },
