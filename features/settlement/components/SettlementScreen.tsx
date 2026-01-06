@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarDisplay } from "@/components/ui/avatar-display";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeftIcon, ArrowRightIcon } from "@/components/icons";
@@ -198,11 +198,11 @@ export function SettlementScreen() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <Avatar className="w-10 h-10">
-                        <AvatarFallback className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">
-                          {settlement.fromUser.name[0]}
-                        </AvatarFallback>
-                      </Avatar>
+                      <AvatarDisplay
+                        avatarKey={settlement.fromUser.avatar}
+                        name={settlement.fromUser.name}
+                        size="md"
+                      />
                       <div>
                         <p className="font-medium text-gray-800 dark:text-white">
                           {settlement.fromUser.name} paid you
@@ -261,11 +261,11 @@ export function SettlementScreen() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Avatar className="w-10 h-10">
-                        <AvatarFallback className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                          {settlement.toUser.name[0]}
-                        </AvatarFallback>
-                      </Avatar>
+                      <AvatarDisplay
+                        avatarKey={settlement.toUser.avatar}
+                        name={settlement.toUser.name}
+                        size="md"
+                      />
                       <div>
                         <p className="font-medium text-gray-800 dark:text-white">
                           To {settlement.toUser.name}
@@ -303,11 +303,11 @@ export function SettlementScreen() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Avatar className="w-10 h-10">
-                        <AvatarFallback className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
-                          {debt.toUserName[0]}
-                        </AvatarFallback>
-                      </Avatar>
+                      <AvatarDisplay
+                        avatarKey={debt.toUserAvatar}
+                        name={debt.toUserName}
+                        size="md"
+                      />
                       <div>
                         <p className="font-medium text-gray-800 dark:text-white">
                           {debt.toUserName}
@@ -349,11 +349,11 @@ export function SettlementScreen() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Avatar className="w-10 h-10">
-                        <AvatarFallback className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">
-                          {debt.fromUserName[0]}
-                        </AvatarFallback>
-                      </Avatar>
+                      <AvatarDisplay
+                        avatarKey={debt.fromUserAvatar}
+                        name={debt.fromUserName}
+                        size="md"
+                      />
                       <div>
                         <p className="font-medium text-gray-800 dark:text-white">
                           {debt.fromUserName}
@@ -399,22 +399,25 @@ export function SettlementScreen() {
             <div className="pt-4">
               <div className="flex items-center justify-center gap-4 mb-6">
                 <div className="text-center">
-                  <Avatar className="w-14 h-14 mx-auto mb-2">
-                    <AvatarFallback className="bg-gray-100 dark:bg-gray-700 text-lg">
-                      You
-                    </AvatarFallback>
-                  </Avatar>
+                  <AvatarDisplay
+                    avatarKey={null}
+                    name="You"
+                    size="lg"
+                    className="mx-auto mb-2"
+                    isCurrentUser
+                  />
                   <p className="text-sm text-gray-600 dark:text-gray-300">
                     You
                   </p>
                 </div>
                 <ArrowRightIcon className="w-6 h-6 text-gray-400" />
                 <div className="text-center">
-                  <Avatar className="w-14 h-14 mx-auto mb-2">
-                    <AvatarFallback className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 text-lg">
-                      {settling.toUserName[0]}
-                    </AvatarFallback>
-                  </Avatar>
+                  <AvatarDisplay
+                    avatarKey={settling.toUserAvatar}
+                    name={settling.toUserName}
+                    size="lg"
+                    className="mx-auto mb-2"
+                  />
                   <p className="text-sm text-gray-600 dark:text-gray-300">
                     {settling.toUserName}
                   </p>

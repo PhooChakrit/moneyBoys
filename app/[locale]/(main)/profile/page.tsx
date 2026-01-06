@@ -3,15 +3,17 @@
 import { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/features/auth/context/AuthContext";
+import { useUserStore } from "@/lib/stores/user-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarDisplay } from "@/components/ui/avatar-display";
 
 export default function ProfilePage() {
   const t = useTranslations("profile");
   const tAuth = useTranslations("auth");
   const { user, refreshUser } = useAuth();
+  const { isOAuthUser, checkIsOAuthUser } = useUserStore();
 
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
@@ -20,53 +22,17 @@ export default function ProfilePage() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [isOAuthUser, setIsOAuthUser] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarKey, setAvatarKey] = useState<string | null>(
+    user?.avatar || null,
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Check if user is OAuth (Google) user
+  // Check if user is OAuth (Google) user - uses cached value if available
   useEffect(() => {
-    const checkOAuth = async () => {
-      try {
-        const res = await fetch("/api/auth/profile");
-        if (res.ok) {
-          const data = await res.json();
-          // OAuth users don't have a password field set
-          setIsOAuthUser(!data.user?.password);
-        }
-      } catch {
-        // Ignore errors
-      }
-    };
-    checkOAuth();
-  }, []);
-
-  // Fetch signed URL for avatar
-  useEffect(() => {
-    const fetchAvatarUrl = async () => {
-      if (user?.avatar) {
-        // Check if avatar is already a full URL (legacy) or a key
-        if (user.avatar.startsWith("http")) {
-          setAvatarUrl(user.avatar);
-        } else {
-          try {
-            const res = await fetch("/api/image-url", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ key: user.avatar }),
-            });
-            if (res.ok) {
-              const data = await res.json();
-              setAvatarUrl(data.url);
-            }
-          } catch {
-            // Ignore errors
-          }
-        }
-      }
-    };
-    fetchAvatarUrl();
-  }, [user?.avatar]);
+    if (isOAuthUser === null) {
+      checkIsOAuthUser();
+    }
+  }, [isOAuthUser, checkIsOAuthUser]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -111,7 +77,10 @@ export default function ProfilePage() {
         throw new Error("Failed to update profile");
       }
 
-      await refreshUser();
+      // Update local avatar key and clear base64 cache to trigger re-fetch
+      setAvatarKey(key);
+      useUserStore.getState().setUserAvatarBase64(null); // Clear cache
+      await refreshUser(); // This will trigger fetchUserAvatarBase64
       setSuccess(t("updateSuccess"));
     } catch {
       setError("Failed to upload image");
@@ -173,15 +142,6 @@ export default function ProfilePage() {
     }
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -203,12 +163,12 @@ export default function ProfilePage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Avatar Section */}
               <div className="flex flex-col items-center space-y-4">
-                <Avatar className="w-24 h-24 border-4 border-emerald-100 dark:border-emerald-900 shadow-lg">
-                  <AvatarImage src={avatarUrl || undefined} alt={user.name} />
-                  <AvatarFallback className="bg-gradient-to-br from-emerald-400 to-teal-500 text-white text-2xl font-bold">
-                    {getInitials(user.name)}
-                  </AvatarFallback>
-                </Avatar>
+                <AvatarDisplay
+                  avatarKey={avatarKey}
+                  name={user.name}
+                  size="xl"
+                  className="border-4 border-emerald-100 dark:border-emerald-900 shadow-lg"
+                />
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -261,7 +221,7 @@ export default function ProfilePage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    disabled={isOAuthUser}
+                    disabled={isOAuthUser ?? false}
                     className={`h-12 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 ${isOAuthUser ? "opacity-60 cursor-not-allowed" : ""}`}
                   />
                   {isOAuthUser && (

@@ -1,13 +1,9 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-} from "react";
+import { createContext, useContext, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { useUserStore } from "@/lib/stores/user-store";
+import api from "@/lib/api";
 
 type User = {
   id: string;
@@ -34,53 +30,43 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const params = useParams();
   const locale = params.locale as string;
 
-  const refreshUser = useCallback(async () => {
-    try {
-      const res = await fetch("/api/auth/me");
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data.user);
-      } else {
-        setUser(null);
-      }
-    } catch {
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Use Zustand store as single source of truth
+  const { user, loading, setUser, setLoading, fetchUser } = useUserStore();
 
+  // Fetch user on mount ONLY if not already loaded
   useEffect(() => {
-    refreshUser();
-  }, [refreshUser]);
+    // Only fetch if we haven't loaded yet (still loading and no user)
+    if (loading && !user) {
+      fetchUser();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - intentionally run once on mount only
+
+  const refreshUser = async () => {
+    await fetchUser();
+  };
 
   const login = async (
     email: string,
     password: string,
   ): Promise<{ error?: string }> => {
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const { data } = await api.post("/auth/login", { email, password });
+      setUser(data.user);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        return { error: data.error || "Login failed" };
+      // Pre-fetch avatar URL if user has one
+      if (data.user?.avatar) {
+        useUserStore.getState().fetchAvatarUrl(data.user.avatar);
       }
 
-      setUser(data.user);
       return {};
-    } catch {
-      return { error: "Something went wrong" };
+    } catch (error) {
+      const err = error as { response?: { data?: { error?: string } } };
+      return { error: err.response?.data?.error || "Login failed" };
     }
   };
 
@@ -90,29 +76,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string,
   ): Promise<{ error?: string }> => {
     try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+      const { data } = await api.post("/auth/register", {
+        name,
+        email,
+        password,
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        return { error: data.error || "Registration failed" };
-      }
-
       setUser(data.user);
       return {};
-    } catch {
-      return { error: "Something went wrong" };
+    } catch (error) {
+      const err = error as { response?: { data?: { error?: string } } };
+      return { error: err.response?.data?.error || "Registration failed" };
     }
   };
 
   const logout = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await api.post("/auth/logout");
       setUser(null);
+      setLoading(true); // Reset loading for next login
+      useUserStore.getState().clearAvatarCache();
       router.push(`/${locale}/login`);
       router.refresh();
     } catch {

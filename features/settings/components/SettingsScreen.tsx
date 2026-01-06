@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarDisplay } from "@/components/ui/avatar-display";
 import { Separator } from "@/components/ui/separator";
 import { ChevronRightIcon } from "@/components/icons";
 import { useSettings } from "./useSettings";
@@ -33,11 +33,11 @@ export function SettingsScreen() {
         <Card className="border-0 shadow-sm dark:bg-gray-800 dark:text-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-4">
-              <Avatar className="w-16 h-16">
-                <AvatarFallback className="text-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
-                  {user?.name?.charAt(0)?.toUpperCase() || "?"}
-                </AvatarFallback>
-              </Avatar>
+              <AvatarDisplay
+                avatarKey={user?.avatar}
+                name={user?.name || "Guest"}
+                size="lg"
+              />
               <div>
                 <p className="font-bold text-gray-800 dark:text-white text-lg">
                   {user?.name || "Guest"}

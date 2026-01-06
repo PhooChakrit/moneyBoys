@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarDisplay } from "@/components/ui/avatar-display";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -212,11 +212,11 @@ export function SettingsDialog({
                     className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     <div className="flex items-center gap-3">
-                      <Avatar className="w-8 h-8">
-                        <AvatarFallback className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 text-sm">
-                          {member.initials}
-                        </AvatarFallback>
-                      </Avatar>
+                      <AvatarDisplay
+                        avatarKey={member.avatar}
+                        name={member.name}
+                        size="sm"
+                      />
                       <div>
                         <p className="font-medium text-gray-800 dark:text-white text-sm">
                           {member.name}
