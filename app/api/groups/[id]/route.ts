@@ -16,15 +16,54 @@ export async function GET(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    // Check if user is a member of this group
-    const membership = await prisma.groupMember.findUnique({
-      where: {
-        userId_groupId: {
-          userId: user.id,
-          groupId: id,
+    // Run membership check and group fetch in parallel for better performance
+    const [membership, group] = await Promise.all([
+      prisma.groupMember.findUnique({
+        where: {
+          userId_groupId: {
+            userId: user.id,
+            groupId: id,
+          },
         },
-      },
-    });
+      }),
+      prisma.group.findUnique({
+        where: { id },
+        include: {
+          members: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  avatar: true,
+                  bankName: true,
+                  bankAccount: true,
+                  qrCodeUrl: true,
+                },
+              },
+            },
+            orderBy: { joinedAt: "asc" },
+          },
+          expenses: {
+            include: {
+              paidBy: {
+                select: { id: true, name: true },
+              },
+              splits: true,
+            },
+            orderBy: { date: "desc" },
+            take: 20,
+          },
+          settlements: {
+            where: { status: "completed" },
+          },
+          _count: {
+            select: { members: true, expenses: true },
+          },
+        },
+      }),
+    ]);
 
     if (!membership) {
       return NextResponse.json(
@@ -32,45 +71,6 @@ export async function GET(request: Request, { params }: RouteParams) {
         { status: 403 },
       );
     }
-
-    // Get group with all details
-    const group = await prisma.group.findUnique({
-      where: { id },
-      include: {
-        members: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                avatar: true,
-                bankName: true,
-                bankAccount: true,
-                qrCodeUrl: true,
-              },
-            },
-          },
-          orderBy: { joinedAt: "asc" },
-        },
-        expenses: {
-          include: {
-            paidBy: {
-              select: { id: true, name: true },
-            },
-            splits: true,
-          },
-          orderBy: { date: "desc" },
-          take: 20,
-        },
-        settlements: {
-          where: { status: "completed" },
-        },
-        _count: {
-          select: { members: true, expenses: true },
-        },
-      },
-    });
 
     if (!group) {
       return NextResponse.json({ error: "Group not found" }, { status: 404 });

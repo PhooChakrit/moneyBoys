@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import api from "@/lib/api";
 
 export interface MemberData {
   id: string;
@@ -96,18 +97,15 @@ export function useGroupDetail({ groupId }: UseGroupDetailProps) {
   useEffect(() => {
     const fetchGroup = async () => {
       try {
-        const res = await fetch(`/api/groups/${groupId}`);
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || "Failed to fetch group");
-        }
-        const data = await res.json();
+        const { data } = await api.get(`/groups/${groupId}`);
         setGroup(data.group);
         setMembers(data.members || []);
         setTransactions(data.transactions || []);
         setDebts(data.debts || []);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load group");
+        const message =
+          err instanceof Error ? err.message : "Failed to load group";
+        setError(message);
       } finally {
         setLoading(false);
       }
@@ -138,28 +136,20 @@ export function useGroupDetail({ groupId }: UseGroupDetailProps) {
     if (!group) return;
     setSavingGroup(true);
     try {
-      const res = await fetch(`/api/groups/${groupId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: editName.trim(),
-          description: editDescription.trim() || null,
-        }),
+      const { data } = await api.patch(`/groups/${groupId}`, {
+        name: editName.trim(),
+        description: editDescription.trim() || null,
       });
-      if (res.ok) {
-        const data = await res.json();
-        setGroup({
-          ...group,
-          name: data.group.name,
-          description: data.group.description,
-        });
-        setIsEditing(false);
-      } else {
-        const data = await res.json();
-        alert(data.error || "Failed to update group");
-      }
-    } catch {
-      alert("Failed to update group");
+      setGroup({
+        ...group,
+        name: data.group.name,
+        description: data.group.description,
+      });
+      setIsEditing(false);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to update group";
+      alert(message);
     } finally {
       setSavingGroup(false);
     }
@@ -170,26 +160,17 @@ export function useGroupDetail({ groupId }: UseGroupDetailProps) {
     if (!confirm("Are you sure you want to remove this member?")) return;
     setRemovingMember(memberId);
     try {
-      const res = await fetch(
-        `/api/groups/${groupId}/members?memberId=${memberId}`,
-        {
-          method: "DELETE",
-        },
-      );
-      if (res.ok) {
-        setMembers(members.filter((m) => m.id !== memberId));
-      } else {
-        const data = await res.json();
-        alert(data.error || "Failed to remove member");
-      }
-    } catch {
-      alert("Failed to remove member");
+      await api.delete(`/groups/${groupId}/members?memberId=${memberId}`);
+      setMembers(members.filter((m) => m.id !== memberId));
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to remove member";
+      alert(message);
     } finally {
       setRemovingMember(null);
     }
   };
 
-  // Delete transaction
   const handleDeleteTransaction = async () => {
     if (!selectedTransaction) return;
     if (
@@ -201,28 +182,20 @@ export function useGroupDetail({ groupId }: UseGroupDetailProps) {
 
     setDeletingTransaction(true);
     try {
-      const res = await fetch(`/api/expenses/${selectedTransaction.id}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        // Remove from local state
-        setTransactions(
-          transactions.filter((t) => t.id !== selectedTransaction.id),
-        );
-        setSelectedTransaction(null);
-        // Refetch to update balances
-        const groupRes = await fetch(`/api/groups/${groupId}`);
-        if (groupRes.ok) {
-          const data = await groupRes.json();
-          setMembers(data.members || []);
-          setDebts(data.debts || []);
-        }
-      } else {
-        const data = await res.json();
-        alert(data.error || "Failed to delete expense");
-      }
-    } catch {
-      alert("Failed to delete expense");
+      await api.delete(`/expenses/${selectedTransaction.id}`);
+      // Remove from local state
+      setTransactions(
+        transactions.filter((t) => t.id !== selectedTransaction.id),
+      );
+      setSelectedTransaction(null);
+      // Refetch to update balances
+      const { data } = await api.get(`/groups/${groupId}`);
+      setMembers(data.members || []);
+      setDebts(data.debts || []);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to delete expense";
+      alert(message);
     } finally {
       setDeletingTransaction(false);
     }
@@ -241,17 +214,12 @@ export function useGroupDetail({ groupId }: UseGroupDetailProps) {
   const handleLeaveGroup = async () => {
     setLeaving(true);
     try {
-      const res = await fetch(`/api/groups/${groupId}/members?memberId=self`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        router.push(`/${locale}/groups`);
-      } else {
-        const data = await res.json();
-        alert(data.error || "Failed to leave group");
-      }
-    } catch {
-      alert("Failed to leave group");
+      await api.delete(`/groups/${groupId}/members?memberId=self`);
+      router.push(`/${locale}/groups`);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to leave group";
+      alert(message);
     } finally {
       setLeaving(false);
       setShowLeaveConfirm(false);
@@ -262,17 +230,12 @@ export function useGroupDetail({ groupId }: UseGroupDetailProps) {
   const handleDeleteGroup = async () => {
     setDeletingGroup(true);
     try {
-      const res = await fetch(`/api/groups/${groupId}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        router.push(`/${locale}/groups`);
-      } else {
-        const data = await res.json();
-        alert(data.error || "Failed to delete group");
-      }
-    } catch {
-      alert("Failed to delete group");
+      await api.delete(`/groups/${groupId}`);
+      router.push(`/${locale}/groups`);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to delete group";
+      alert(message);
     } finally {
       setDeletingGroup(false);
       setShowDeleteConfirm(false);
@@ -283,40 +246,24 @@ export function useGroupDetail({ groupId }: UseGroupDetailProps) {
   const toggleAllowMemberEdit = async (allow: boolean) => {
     if (!group) return;
     try {
-      const res = await fetch(`/api/groups/${groupId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ allowMemberEdit: allow }),
-      });
-      if (res.ok) {
-        setGroup({ ...group, allowMemberEdit: allow });
-      } else {
-        const data = await res.json();
-        alert(data.error || "Failed to update setting");
-      }
-    } catch {
-      alert("Failed to update setting");
+      await api.patch(`/groups/${groupId}`, { allowMemberEdit: allow });
+      setGroup({ ...group, allowMemberEdit: allow });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to update setting";
+      alert(message);
     }
   };
 
   // Update member role
   const updateMemberRole = async (memberId: string, role: string) => {
     try {
-      const res = await fetch(`/api/groups/${groupId}/members`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId, role }),
-      });
-      if (res.ok) {
-        setMembers(
-          members.map((m) => (m.id === memberId ? { ...m, role } : m)),
-        );
-      } else {
-        const data = await res.json();
-        alert(data.error || "Failed to update role");
-      }
-    } catch {
-      alert("Failed to update role");
+      await api.patch(`/groups/${groupId}/members`, { memberId, role });
+      setMembers(members.map((m) => (m.id === memberId ? { ...m, role } : m)));
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to update role";
+      alert(message);
     }
   };
 
