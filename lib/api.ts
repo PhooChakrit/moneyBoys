@@ -14,9 +14,13 @@ api.interceptors.response.use(
     // Handle 401 - redirect to login
     if (error.response?.status === 401 && typeof window !== "undefined") {
       const currentPath = window.location.pathname;
-      const locale = currentPath.split("/")[1];
-      const validLocale = ["en", "th"].includes(locale) ? locale : "en";
-      window.location.href = `/${validLocale}/login`;
+      
+      // Don't redirect if already on login page to avoid loops
+      if (!currentPath.includes("/login")) {
+        const locale = currentPath.split("/")[1];
+        const validLocale = ["en", "th"].includes(locale) ? locale : "en";
+        window.location.href = `/${validLocale}/login`;
+      }
     }
     return Promise.reject(error);
   },
