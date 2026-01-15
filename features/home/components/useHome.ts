@@ -33,6 +33,15 @@ export function useHome() {
   const hasFetched = useRef(false);
 
   useEffect(() => {
+    // Wait for auth to complete before fetching
+    if (authLoading) return;
+
+    // Don't fetch if not authenticated - api interceptor handles redirect on 401
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
     // Prevent double fetch in React strict mode
     if (hasFetched.current) return;
     hasFetched.current = true;
@@ -49,7 +58,7 @@ export function useHome() {
     }
 
     fetchDashboard();
-  }, []);
+  }, [authLoading, user]);
 
   const formatCurrency = (amount: number) => {
     const sign = amount > 0 ? "+" : "";

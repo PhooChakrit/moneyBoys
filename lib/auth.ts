@@ -94,6 +94,8 @@ export async function getCurrentUser() {
   const session = await validateSession(token);
 
   if (!session) {
+    // Session is invalid/expired - delete the stale cookie to prevent redirect loops
+    cookieStore.delete(SESSION_COOKIE_NAME);
     return null;
   }
 
